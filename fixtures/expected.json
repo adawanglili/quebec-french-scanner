@@ -1,0 +1,43 @@
+{
+  "fixture": "Northwind bilingual coffee shop",
+  "source": "Test Cases note, 2026-10-19 draft",
+  "results": {
+    "flag": "The scanner must report this finding.",
+    "no_finding": "The scanner must report nothing on this element.",
+    "needs_review": "The scanner must report this as needs review, not as a finding."
+  },
+  "notes": [
+    "LE-02 and LE-05 sit in the shared French nav and footer, so they appear on every French page. Count each one once after string dedupe.",
+    "Paths are URL paths on the fixture site. Serve fixtures/site/ as the web root.",
+    "Every case is marked in the HTML with a comment like <!-- case: LE-01 -->. The scanner must not read these comments."
+  ],
+  "cases": [
+    {"id": "MP-01", "category": "missing_french_page", "page": "/en/careers/", "element": "page", "text": null, "expected": "flag", "finding": "missing_french_page"},
+    {"id": "MP-02", "category": "missing_french_page", "page": "/en/about/", "pair": "/fr/a-propos/", "element": "page", "text": null, "expected": "no_finding", "note": "Paired by hreflang."},
+    {"id": "MP-03", "category": "missing_french_page", "page": "/en/blog/launch/", "pair": "/fr/blogue/lancement/", "element": "page", "text": null, "expected": "no_finding", "note": "No hreflang. Paired by the language switcher link."},
+
+    {"id": "LE-01", "category": "leftover_english", "page": "/fr/produits/melange-maison/", "element": "button", "text": "Add to cart", "expected": "flag", "finding": "leftover_english"},
+    {"id": "LE-02", "category": "leftover_english", "page": "*fr", "element": "nav a", "text": "Contact us", "expected": "flag", "finding": "leftover_english", "note": "Shared nav on all French pages."},
+    {"id": "LE-03", "category": "leftover_english", "page": "/fr/contact/", "element": "span.field-error", "text": "This field is required", "expected": "flag", "finding": "leftover_english"},
+    {"id": "LE-04", "category": "leftover_english", "page": "/fr/", "element": "img@alt", "text": "Woman holding a coffee cup", "expected": "flag", "finding": "leftover_english"},
+    {"id": "LE-05", "category": "leftover_english", "page": "*fr", "element": "footer p", "text": "Northwind Coffee Roasters is a registered trademark. Prices and availability are subject to change without notice. All rights reserved.", "expected": "flag", "finding": "leftover_english", "note": "Shared footer on all French pages."},
+    {"id": "LE-06", "category": "leftover_english", "page": "*fr", "element": "a.logo", "text": "Northwind", "expected": "no_finding", "note": "Brand name."},
+    {"id": "LE-07", "category": "leftover_english", "page": "/fr/contact/", "element": "p", "text": "email", "expected": "needs_review", "suggestion": "courriel", "note": "Common in usage. The OQLF recommends courriel."},
+    {"id": "LE-08", "category": "leftover_english", "page": "/fr/produits/melange-maison/", "element": "p", "text": "SKU-4471", "expected": "no_finding", "note": "Product code."},
+    {"id": "LE-09", "category": "leftover_english", "page": "/fr/blogue/lancement/", "element": "em", "text": "The Slow Morning Brew", "expected": "needs_review", "note": "English book title quoted in italics."},
+
+    {"id": "MD-01", "category": "metadata", "page": "/fr/conditions/", "element": "html@lang", "text": "en", "expected": "flag", "finding": "wrong_lang_attribute"},
+    {"id": "MD-02", "category": "metadata", "page": "/fr/produits/", "element": "title", "text": "Our coffees | Northwind", "expected": "flag", "finding": "leftover_english_title"},
+    {"id": "MD-03", "category": "metadata", "page": "/fr/confidentialite/", "element": "meta[name=description]", "text": null, "expected": "flag", "finding": "missing_meta_description"},
+    {"id": "MD-04", "category": "metadata", "page": "/fr/blogue/lancement/", "element": "meta[name=description]", "text": "Our coffee is now available online, with delivery across Quebec.", "expected": "flag", "finding": "leftover_english_metadata"},
+    {"id": "MD-05", "category": "metadata", "page": "/fr/a-propos/", "element": "head", "text": null, "expected": "no_finding", "note": "lang fr-CA, French title and French description."},
+
+    {"id": "TM-01", "category": "terminology", "page": "/fr/paiement/", "element": "h1", "text": "panier d'achat", "expected": "no_finding", "note": "Accepted term."},
+    {"id": "TM-02", "category": "terminology", "page": "/fr/confidentialite/", "element": "p", "text": "mail", "expected": "flag", "finding": "terminology", "suggestion": "courriel", "gdt_record": null},
+    {"id": "TM-03", "category": "terminology", "page": "/fr/contact/", "element": "p", "text": "Parking", "expected": "flag", "finding": "terminology", "suggestion": "stationnement", "gdt_record": null},
+    {"id": "TM-04", "category": "terminology", "page": "/fr/", "element": "p", "text": "week-end", "expected": "flag", "finding": "terminology", "suggestion": "fin de semaine", "gdt_record": null},
+    {"id": "TM-05", "category": "terminology", "page": "/fr/blogue/lancement/", "element": "p", "text": "faire du shopping", "expected": "flag", "finding": "terminology", "suggestion": "magasiner", "gdt_record": null},
+    {"id": "TM-06", "category": "terminology", "page": "/fr/produits/melange-maison/", "element": "button", "text": "Télécharger", "expected": "no_finding"},
+    {"id": "TM-07", "category": "terminology", "page": "/fr/paiement/", "element": "label", "text": "Date d'expiration", "expected": "needs_review", "note": "Depends on context."}
+  ]
+}

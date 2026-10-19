@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nous joindre | Northwind</title>
+<meta name="description" content="Visitez le café Northwind sur la rue Saint-Denis ou écrivez-nous.">
+<link rel="alternate" hreflang="en-CA" href="/en/contact/">
+<link rel="alternate" hreflang="fr-CA" href="/fr/contact/">
+<link rel="alternate" hreflang="x-default" href="/fr/contact/">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header>
+  <a class="logo" href="/fr/">Northwind</a>
+  <nav>
+  <ul>
+    <li><a href="/fr/">Accueil</a></li>
+    <li><a href="/fr/produits/">Nos cafés</a></li>
+    <li><a href="/fr/a-propos/">À propos</a></li>
+    <li><a href="/fr/blogue/lancement/">Blogue</a></li>
+    <li><a href="/fr/contact/">Contact us<!-- case: LE-02 --></a></li>
+    <li><a href="/fr/paiement/">Panier</a></li>
+  </ul>
+  </nav>
+  <a class="lang-switch" href="/en/contact/" lang="en" hreflang="en-CA">English</a>
+</header>
+<main>
+<h1>Nous joindre</h1>
+<!-- case: LE-07 -->
+<p>Écrivez-nous par email à bonjour@northwind.example ou utilisez le formulaire ci-dessous.</p>
+<form action="#" method="post" novalidate>
+  <label>Nom <input type="text" name="name" required></label>
+  <!-- case: LE-03 -->
+  <span class="field-error" hidden>This field is required</span>
+  <label>Adresse courriel <input type="email" name="email" required></label>
+  <span class="field-error" hidden>Veuillez entrer une adresse courriel valide.</span>
+  <label>Message <textarea name="message" rows="4"></textarea></label>
+  <button type="submit">Envoyer</button>
+</form>
+<h2>Pour nous trouver</h2>
+<!-- case: TM-03 -->
+<p>1200, rue Saint-Denis, Montréal (Québec). Parking gratuit derrière l'immeuble. La station de métro Berri-UQAM est à cinq minutes de marche.</p>
+</main>
+<footer>
+<ul>
+  <li><a href="/fr/confidentialite/">Politique de confidentialité</a></li>
+  <li><a href="/fr/conditions/">Conditions d'utilisation</a></li>
+</ul>
+<!-- case: LE-05 -->
+<p>Northwind Coffee Roasters is a registered trademark. Prices and availability are subject to change without notice. All rights reserved.</p>
+</footer>
+</body>
+</html>

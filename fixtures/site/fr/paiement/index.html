@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panier et paiement | Northwind</title>
+<meta name="description" content="Vérifiez votre panier d'achat et payez en toute sécurité.">
+<link rel="alternate" hreflang="en-CA" href="/en/checkout/">
+<link rel="alternate" hreflang="fr-CA" href="/fr/paiement/">
+<link rel="alternate" hreflang="x-default" href="/fr/paiement/">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header>
+  <a class="logo" href="/fr/">Northwind</a>
+  <nav>
+  <ul>
+    <li><a href="/fr/">Accueil</a></li>
+    <li><a href="/fr/produits/">Nos cafés</a></li>
+    <li><a href="/fr/a-propos/">À propos</a></li>
+    <li><a href="/fr/blogue/lancement/">Blogue</a></li>
+    <li><a href="/fr/contact/">Contact us<!-- case: LE-02 --></a></li>
+    <li><a href="/fr/paiement/">Panier</a></li>
+  </ul>
+  </nav>
+  <a class="lang-switch" href="/en/checkout/" lang="en" hreflang="en-CA">English</a>
+</header>
+<main>
+<!-- case: TM-01 -->
+<h1>Votre panier d'achat</h1>
+<p>Mélange maison, 340 g, quantité 1 : 18,95 $</p>
+<h2>Paiement</h2>
+<form action="#" method="post">
+  <label>Nom sur la carte <input type="text" name="name" autocomplete="cc-name"></label>
+  <label>Numéro de carte <input type="text" name="card" inputmode="numeric" autocomplete="cc-number"></label>
+  <!-- case: TM-07 -->
+  <label>Date d'expiration <input type="text" name="exp" placeholder="MM/AA" autocomplete="cc-exp"></label>
+  <label>Code de sécurité <input type="text" name="cvc" inputmode="numeric" autocomplete="cc-csc"></label>
+  <button type="submit">Payer maintenant</button>
+</form>
+</main>
+<footer>
+<ul>
+  <li><a href="/fr/confidentialite/">Politique de confidentialité</a></li>
+  <li><a href="/fr/conditions/">Conditions d'utilisation</a></li>
+</ul>
+<!-- case: LE-05 -->
+<p>Northwind Coffee Roasters is a registered trademark. Prices and availability are subject to change without notice. All rights reserved.</p>
+</footer>
+</body>
+</html>

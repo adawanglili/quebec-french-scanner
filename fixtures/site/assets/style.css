@@ -1,0 +1,19 @@
+:root { --ink: #2b2118; --paper: #faf6f0; --accent: #8a4b2a; --line: #e2d8cc; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.55 Georgia, "Times New Roman", serif; color: var(--ink); background: var(--paper); }
+header, main, footer { max-width: 860px; margin: 0 auto; padding: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; border-bottom: 1px solid var(--line); }
+.logo { font-weight: bold; font-size: 1.3rem; color: var(--accent); text-decoration: none; }
+nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: 16px; margin: 0; padding: 0; }
+nav a, .lang-switch { color: var(--ink); }
+.lang-switch { margin-left: auto; }
+img { max-width: 100%; height: auto; display: block; background: var(--line); }
+.products { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; padding: 0; list-style: none; }
+.products li { border: 1px solid var(--line); padding: 12px; background: #fff; }
+form { display: grid; gap: 12px; max-width: 420px; }
+label { display: grid; gap: 4px; }
+input, textarea, button { font: inherit; padding: 8px; }
+button { background: var(--accent); color: #fff; border: 0; cursor: pointer; }
+.field-error { color: #a12020; font-size: 0.9rem; }
+footer { border-top: 1px solid var(--line); font-size: 0.9rem; }
+footer ul { list-style: none; display: flex; gap: 16px; padding: 0; }

@@ -1,0 +1,17 @@
+# Downloaded data. Fetch it with scripts/download_oqlf_data.py.
+data/raw/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Scan output
+reports/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
