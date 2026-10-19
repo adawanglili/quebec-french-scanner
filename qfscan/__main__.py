@@ -3,6 +3,7 @@
 Examples:
     python -m qfscan scan http://localhost:8000/ --out reports/fixture.json
     python -m qfscan score reports/fixture.json
+    python -m qfscan view reports/fixture.json
     python -m qfscan scan https://example.com/ --brand "Example Inc" --max-pages 30
 """
 
@@ -15,6 +16,7 @@ from pathlib import Path
 
 from .checks import run_checks
 from .crawl import DEFAULT_MAX_PAGES, crawl
+from .html import render_html, write_sheet
 from .report import build_report
 from .score import format_score, load, score
 
@@ -58,6 +60,7 @@ def cmd_scan(args) -> int:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(text + "\n", encoding="utf-8")
         print(f"Report written to {args.out}", file=sys.stderr)
+        write_views(Path(args.out), report)
     else:
         print(text)
     s = report["summary"]
@@ -65,6 +68,20 @@ def cmd_scan(args) -> int:
         f"{s['pages_crawled']} pages, {s['pairs']} pairs, {s['findings']} findings, "
         f"{s['needs_review']} needs review", file=sys.stderr,
     )
+    return 0
+
+
+def write_views(json_path: Path, report: dict) -> None:
+    html_path = json_path.with_suffix(".html")
+    sheet_path = json_path.with_name(json_path.stem + "-review.csv")
+    html_path.write_text(render_html(report), encoding="utf-8")
+    rows = write_sheet(report, sheet_path)
+    print(f"Readable report: {html_path}", file=sys.stderr)
+    print(f"Review sheet ({rows} rows): {sheet_path}", file=sys.stderr)
+
+
+def cmd_view(args) -> int:
+    write_views(Path(args.report), load(args.report))
     return 0
 
 
@@ -89,6 +106,10 @@ def main(argv: list[str] | None = None) -> int:
     scan.add_argument("--brand", action="append", help="Brand or product name to ignore. Repeat for several.")
     scan.add_argument("--ignore-robots", action="store_true", help="Only for your own site")
     scan.set_defaults(func=cmd_scan)
+
+    view = sub.add_parser("view", help="Make a readable HTML report and a review sheet from a JSON report")
+    view.add_argument("report")
+    view.set_defaults(func=cmd_view)
 
     sc = sub.add_parser("score", help="Score a report against the fixture ground truth")
     sc.add_argument("report")
