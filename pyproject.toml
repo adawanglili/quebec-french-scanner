@@ -26,5 +26,8 @@ qfscan = "qfscan.__main__:main"
 [tool.setuptools]
 packages = ["qfscan"]
 
+[tool.setuptools.package-data]
+qfscan = ["lexicon/*.csv"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

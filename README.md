@@ -24,8 +24,8 @@ The fixture was built alongside the scanner, so these numbers show the checks wo
 | --- | --- |
 | Missing French page | An English page has no French equivalent |
 | Leftover English | English strings on French pages: buttons, menus, errors, alt text |
-| Metadata | Missing or English title and description, wrong `lang`, hreflang |
-| OQLF terminology | Common web terms checked against OQLF officialized terms, with the record cited |
+| Metadata | Missing or English title and description, missing or wrong `lang` |
+| OQLF terminology | Common web anglicisms, with a Quebec French suggestion and the GDT record cited |
 
 Everything is deterministic for now. A language model confirm step for terminology is planned.
 
