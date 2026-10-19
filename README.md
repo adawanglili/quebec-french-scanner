@@ -8,7 +8,15 @@ This is a portfolio project by Lili Wang. It is a working prototype, not a produ
 
 ## Status
 
-Week 1 of 3. The fixture site and the data download script are done. The crawler and checks are next.
+The crawler, all four checks, the JSON report and the scorer work end to end. On the fixture site the scanner finds every planted gap with no false positives:
+
+| Metric | Fixture result |
+| --- | --- |
+| Precision | 100% (14 of 14 findings correct) |
+| Recall | 100% (14 of 14 planted gaps found) |
+| Needs review | 3 of 3 judgment calls sent to review |
+
+The fixture was built alongside the scanner, so these numbers show the checks work as designed. They do not show real world accuracy. Real site tests come next.
 
 ## What it checks
 
@@ -19,11 +27,24 @@ Week 1 of 3. The fixture site and the data download script are done. The crawler
 | Metadata | Missing or English title and description, wrong `lang`, hreflang |
 | OQLF terminology | Common web terms checked against OQLF officialized terms, with the record cited |
 
-Only flagged terminology snippets go to a language model for a confirm or reject step. Everything else is deterministic.
+Everything is deterministic for now. A language model confirm step for terminology is planned.
+
+**Short strings.** Lingua alone is unreliable on interface text. It rates "Contact us" only 54% English. So short strings also use word frequency from `wordfreq`: each word leans English, leans French or is neutral. A short string counts as English when at least one word leans English and none leans French.
+
+**Terminology.** The OQLF data lists French terms and their English equivalents, but it does not list terms to avoid. So the scanner uses a curated list of common web anglicisms in `qfscan/lexicon/web_terms.csv`. At scan time each entry is matched to its GDT record, which is cited on the finding. A term with no record is sent to review instead.
 
 ## Repo layout
 
 ```
+qfscan/
+  crawl.py           crawls one site and pairs English and French pages
+  text.py            extracts visible text and decides if a string is English
+  terms.py           terminology check against the GDT records
+  lexicon/web_terms.csv   curated list of common web anglicisms
+  checks.py          runs the checks and merges repeated findings
+  rules.py           why each finding matters, its reference and the fix
+  report.py          builds the JSON report
+  score.py           scores a report against fixtures/expected.json
 fixtures/
   build_fixture.py   builds the fake bilingual test site
   site/              the built site, served as a web root
@@ -37,18 +58,26 @@ data/raw/            downloaded data (not committed)
 
 ## Quick start
 
-Requires Python 3.10 or later. The current scripts use only the standard library.
+Requires Python 3.10 or later.
 
 ```bash
+pip install -e ".[dev]"
+
 # Get the OQLF data
 python scripts/download_oqlf_data.py
 
 # Serve the fixture site at http://localhost:8000
 python -m http.server 8000 -d fixtures/site
 
-# Check the fixture
-python -m unittest discover tests
+# In a second terminal: scan it and score the report
+python -m qfscan scan http://localhost:8000/ --out reports/fixture.json
+python -m qfscan score reports/fixture.json
+
+# Run the tests
+python -m pytest
 ```
+
+To scan a real site, pass its URL. Add `--brand "Name"` for brand or product names that should not count as English. The crawler respects robots.txt and waits half a second between requests.
 
 ## Data sources
 

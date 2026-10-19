@@ -27,6 +27,21 @@ RULES = {
         "reference": "Titles of works are often kept in their original language. A person should decide.",
         "fix": "Keep it if it is a title. Add lang=\"en\" to the element so tools can tell.",
     },
+    "terminology": {
+        "why": "An English or France French term where Quebec French has an established term.",
+        "reference": "OQLF Grand dictionnaire terminologique. The record is linked in the evidence.",
+        "fix": "Use the suggested term.",
+    },
+    "tolerated_anglicism": {
+        "why": "A borrowing that is common in Quebec usage, where the OQLF recommends a French term.",
+        "reference": "OQLF Grand dictionnaire terminologique. The record is linked in the evidence.",
+        "fix": "Consider the suggested term, especially in formal text.",
+    },
+    "terminology_review": {
+        "why": "This term can be right or wrong depending on the context.",
+        "reference": "OQLF Grand dictionnaire terminologique. The record is linked in the evidence.",
+        "fix": "Check the meaning in context. The note explains what to look for.",
+    },
     "wrong_lang_attribute": {
         "why": "The page is French but the html lang attribute says otherwise.",
         "reference": "Not a Charter rule. WCAG 2.2 success criterion 3.1.1 (Language of Page). Screen readers and search engines use it.",

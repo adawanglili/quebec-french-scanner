@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 
 from .crawl import CrawlResult, Page, primary_language
 from .rules import RULES
+from .terms import find_terms, load_lexicon
 from .text import brand_words_from, extract_units, judge_language
 
 FINDING = "finding"
@@ -40,7 +41,7 @@ class Finding:
         # Page level findings are unique per page. Text findings dedupe by text.
         if self.text is None:
             return (self.type, self.pages[0])
-        return (self.type, self.text.casefold())
+        return (self.type, self.text.casefold(), self.evidence.get("suggestion"))
 
     def to_dict(self) -> dict:
         rule = RULES.get(self.type, {})
@@ -87,11 +88,35 @@ def check_missing_french(result: CrawlResult) -> list[Finding]:
     ]
 
 
+TERM_TYPES = {"flag": "terminology", "tolerated": "tolerated_anglicism", "review": "terminology_review"}
+
+
+def term_findings(text: str, element: str, page: Page) -> list[Finding]:
+    findings = []
+    for match in find_terms(text, load_lexicon()):
+        entry = match.entry
+        severity = FINDING if entry.kind == "flag" and entry.gdt_record else NEEDS_REVIEW
+        evidence = {
+            "suggestion": entry.suggestion,
+            "gdt_record": entry.gdt_record,
+            "gdt_terms": entry.gdt_terms,
+            "context": match.context,
+        }
+        if entry.note:
+            evidence["note"] = entry.note
+        if not entry.gdt_record:
+            evidence["note"] = (entry.note + " " if entry.note else "") + "No GDT record found in the downloaded data."
+        findings.append(Finding(TERM_TYPES[entry.kind], severity, match.form, element, [page.url], evidence))
+    return findings
+
+
 def check_leftover_english(page: Page, brand: set[str]) -> list[Finding]:
     findings = []
     for unit in extract_units(page.html):
         verdict = judge_language(unit.text, brand)
         if not verdict or not verdict.is_english:
+            # French text: look for anglicisms and France French terms instead.
+            findings += term_findings(unit.text, unit.element, page)
             continue
         evidence = {
             "english_confidence": verdict.english_confidence,
