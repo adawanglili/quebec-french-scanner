@@ -21,9 +21,36 @@ from .score import format_score, load, score
 EXPECTED = Path(__file__).resolve().parent.parent / "fixtures" / "expected.json"
 
 
+STATUS_HELP = {
+    401: "The site asks for a login.",
+    403: "The site refused the request. It probably blocks automated tools. "
+         "The scanner does not try to get around this. Try another site, "
+         "or ask the site owner to allow the qfscan user agent.",
+    404: "The page was not found. Check the address.",
+    429: "The site says there were too many requests. Wait and try again with a longer --delay.",
+    503: "The site is unavailable or is showing a bot check page. Try again later or try another site.",
+}
+
+
+def scan_failure_message(result) -> str:
+    if not result.pages:
+        reasons = "; ".join(f"{s['url']}: {s['reason']}" for s in result.skipped[:3]) or "no response"
+        return f"Scan failed. No page could be fetched ({reasons})."
+    first = next(iter(result.pages.values()))
+    help_text = STATUS_HELP.get(first.status, "The site did not return a normal page.")
+    return f"Scan failed. {first.url} returned HTTP {first.status}. {help_text}"
+
+
 def cmd_scan(args) -> int:
     print(f"Crawling {args.url} (up to {args.max_pages} pages)...", file=sys.stderr)
     result = crawl(args.url, max_pages=args.max_pages, delay=args.delay, respect_robots=not args.ignore_robots)
+    ok_pages = [p for p in result.pages.values() if p.status == 200]
+    if not ok_pages:
+        print(scan_failure_message(result), file=sys.stderr)
+        return 2
+    failed = [p for p in result.pages.values() if p.status != 200]
+    if failed:
+        print(f"Warning: {len(failed)} pages returned an error status and were not checked.", file=sys.stderr)
     findings = run_checks(result, brands=args.brand)
     report = build_report(result, findings)
     text = json.dumps(report, ensure_ascii=False, indent=2)
