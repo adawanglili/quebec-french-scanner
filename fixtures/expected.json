@@ -1,6 +1,7 @@
 {
   "fixture": "Northwind bilingual coffee shop",
   "source": "Test Cases note, 2026-10-19 draft",
+  "gdt_data": "fiches_recentes_signees_oqlf_2026-01-19.csv",
   "results": {
     "flag": "The scanner must report this finding.",
     "no_finding": "The scanner must report nothing on this element.",
@@ -22,7 +23,7 @@
     {"id": "LE-04", "category": "leftover_english", "page": "/fr/", "element": "img@alt", "text": "Woman holding a coffee cup", "expected": "flag", "finding": "leftover_english"},
     {"id": "LE-05", "category": "leftover_english", "page": "*fr", "element": "footer p", "text": "Northwind Coffee Roasters is a registered trademark. Prices and availability are subject to change without notice. All rights reserved.", "expected": "flag", "finding": "leftover_english", "note": "Shared footer on all French pages."},
     {"id": "LE-06", "category": "leftover_english", "page": "*fr", "element": "a.logo", "text": "Northwind", "expected": "no_finding", "note": "Brand name."},
-    {"id": "LE-07", "category": "leftover_english", "page": "/fr/contact/", "element": "p", "text": "email", "expected": "needs_review", "suggestion": "courriel", "note": "Common in usage. The OQLF recommends courriel."},
+    {"id": "LE-07", "category": "leftover_english", "page": "/fr/contact/", "element": "p", "text": "email", "expected": "needs_review", "suggestion": "courriel", "note": "Common in usage. The OQLF recommends courriel.", "gdt_record": "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/8353974/courriel"},
     {"id": "LE-08", "category": "leftover_english", "page": "/fr/produits/melange-maison/", "element": "p", "text": "SKU-4471", "expected": "no_finding", "note": "Product code."},
     {"id": "LE-09", "category": "leftover_english", "page": "/fr/blogue/lancement/", "element": "em", "text": "The Slow Morning Brew", "expected": "needs_review", "note": "English book title quoted in italics."},
 
@@ -32,12 +33,12 @@
     {"id": "MD-04", "category": "metadata", "page": "/fr/blogue/lancement/", "element": "meta[name=description]", "text": "Our coffee is now available online, with delivery across Quebec.", "expected": "flag", "finding": "leftover_english_metadata"},
     {"id": "MD-05", "category": "metadata", "page": "/fr/a-propos/", "element": "head", "text": null, "expected": "no_finding", "note": "lang fr-CA, French title and French description."},
 
-    {"id": "TM-01", "category": "terminology", "page": "/fr/paiement/", "element": "h1", "text": "panier d'achat", "expected": "no_finding", "note": "Accepted term."},
-    {"id": "TM-02", "category": "terminology", "page": "/fr/confidentialite/", "element": "p", "text": "mail", "expected": "flag", "finding": "terminology", "suggestion": "courriel", "gdt_record": null},
-    {"id": "TM-03", "category": "terminology", "page": "/fr/contact/", "element": "p", "text": "Parking", "expected": "flag", "finding": "terminology", "suggestion": "stationnement", "gdt_record": null},
-    {"id": "TM-04", "category": "terminology", "page": "/fr/", "element": "p", "text": "week-end", "expected": "flag", "finding": "terminology", "suggestion": "fin de semaine", "gdt_record": null},
-    {"id": "TM-05", "category": "terminology", "page": "/fr/blogue/lancement/", "element": "p", "text": "faire du shopping", "expected": "flag", "finding": "terminology", "suggestion": "magasiner", "gdt_record": null},
-    {"id": "TM-06", "category": "terminology", "page": "/fr/produits/melange-maison/", "element": "button", "text": "Télécharger", "expected": "no_finding"},
-    {"id": "TM-07", "category": "terminology", "page": "/fr/paiement/", "element": "label", "text": "Date d'expiration", "expected": "needs_review", "note": "Depends on context."}
+    {"id": "TM-01", "category": "terminology", "page": "/fr/paiement/", "element": "h1", "text": "panier d'achat", "expected": "no_finding", "note": "Accepted term.", "gdt_record": "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/8873118/panier-dachat-virtuel"},
+    {"id": "TM-02", "category": "terminology", "page": "/fr/confidentialite/", "element": "p", "text": "mail", "expected": "flag", "finding": "terminology", "suggestion": "courriel", "gdt_record": "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/8353974/courriel"},
+    {"id": "TM-03", "category": "terminology", "page": "/fr/contact/", "element": "p", "text": "Parking", "expected": "flag", "finding": "terminology", "suggestion": "stationnement", "gdt_record": "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/1298970/parc-de-stationnement"},
+    {"id": "TM-04", "category": "terminology", "page": "/fr/", "element": "p", "text": "week-end", "expected": "flag", "finding": "terminology", "suggestion": "fin de semaine", "gdt_record": "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/8361442/fin-de-semaine"},
+    {"id": "TM-05", "category": "terminology", "page": "/fr/blogue/lancement/", "element": "p", "text": "faire du shopping", "expected": "flag", "finding": "terminology", "suggestion": "magasiner", "gdt_record": "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/8357752/magasiner"},
+    {"id": "TM-06", "category": "terminology", "page": "/fr/produits/melange-maison/", "element": "button", "text": "Télécharger", "expected": "no_finding", "gdt_record": "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/2075522/telecharger"},
+    {"id": "TM-07", "category": "terminology", "page": "/fr/paiement/", "element": "label", "text": "Date d'expiration", "expected": "needs_review", "note": "Depends on context.", "gdt_record": "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/8426438/date-dexpiration"}
   ]
 }

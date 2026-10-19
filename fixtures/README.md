@@ -65,4 +65,4 @@ The full list with expected results is in [`expected.json`](expected.json). Each
 - Everything that is not a planted case must be clean Quebec French. Any other finding counts as a false positive.
 - The tests check that planted words such as "parking" or "week-end" appear only on their own page. Add new planted words to `TestNoLeaks` in `tests/test_fixture.py`.
 - The French language switcher reads "English" and carries `lang="en"`. This is correct markup, not a gap.
-- GDT record numbers for the terminology cases are still empty in `expected.json`. Fill them in from the downloaded OQLF data.
+- Each terminology case has a `gdt_record` link in `expected.json`. They were checked against the term records file of 2026-01-19.
