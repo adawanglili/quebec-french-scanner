@@ -1,6 +1,7 @@
 """Command line entry point.
 
 Examples:
+    python -m qfscan scan https://example.com/
     python -m qfscan scan http://localhost:8000/ --out reports/fixture.json
     python -m qfscan score reports/fixture.json
     python -m qfscan view reports/fixture.json
@@ -11,8 +12,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from .checks import run_checks
 from .crawl import DEFAULT_MAX_PAGES, crawl
@@ -43,6 +47,32 @@ def scan_failure_message(result) -> str:
     return f"Scan failed. {first.url} returned HTTP {first.status}. {help_text}"
 
 
+REPORTS_DIR = Path("reports")
+
+
+def default_report_name(url: str, now: datetime | None = None) -> str:
+    """'https://www.canada.ca/fr.html' -> 'canada.ca_2026-10-19_1644.json'"""
+    host = urlsplit(url if "//" in url else "//" + url).netloc.lower().removeprefix("www.")
+    host = re.sub(r"[^a-z0-9.-]", "-", host) or "site"
+    stamp = (now or datetime.now()).strftime("%Y-%m-%d_%H%M")
+    return f"{host}_{stamp}.json"
+
+
+def report_path(url: str, out: str | None, overwrite: bool = False) -> Path:
+    """Pick the report file. Never replace an existing report unless asked."""
+    path = Path(out) if out else REPORTS_DIR / default_report_name(url)
+    if path.suffix.lower() != ".json":
+        path = path.with_suffix(".json")
+    if overwrite or not path.exists():
+        return path
+    n = 2
+    while (candidate := path.with_name(f"{path.stem}_{n}{path.suffix}")).exists():
+        n += 1
+    print(f"{path} already exists. Saving as {candidate.name} instead. "
+          f"Use --overwrite to replace it.", file=sys.stderr)
+    return candidate
+
+
 def cmd_scan(args) -> int:
     print(f"Crawling {args.url} (up to {args.max_pages} pages)...", file=sys.stderr)
     result = crawl(args.url, max_pages=args.max_pages, delay=args.delay, respect_robots=not args.ignore_robots)
@@ -56,13 +86,11 @@ def cmd_scan(args) -> int:
     findings = run_checks(result, brands=args.brand)
     report = build_report(result, findings)
     text = json.dumps(report, ensure_ascii=False, indent=2)
-    if args.out:
-        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.out).write_text(text + "\n", encoding="utf-8")
-        print(f"Report written to {args.out}", file=sys.stderr)
-        write_views(Path(args.out), report)
-    else:
-        print(text)
+    out = report_path(args.url, args.out, args.overwrite)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text + "\n", encoding="utf-8")
+    print(f"Report written to {out}", file=sys.stderr)
+    write_views(out, report)
     s = report["summary"]
     print(
         f"{s['pages_crawled']} pages, {s['pairs']} pairs, {s['findings']} findings, "
@@ -100,7 +128,8 @@ def main(argv: list[str] | None = None) -> int:
 
     scan = sub.add_parser("scan", help="Crawl a site and report French language gaps")
     scan.add_argument("url")
-    scan.add_argument("--out", help="Write the JSON report to this file")
+    scan.add_argument("--out", help="Report file name. Default: reports/<site>_<date>_<time>.json")
+    scan.add_argument("--overwrite", action="store_true", help="Replace the --out file if it exists")
     scan.add_argument("--max-pages", type=int, default=DEFAULT_MAX_PAGES)
     scan.add_argument("--delay", type=float, default=0.5, help="Seconds between requests")
     scan.add_argument("--brand", action="append", help="Brand or product name to ignore. Repeat for several.")

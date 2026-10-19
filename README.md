@@ -77,7 +77,9 @@ python -m qfscan score reports/fixture.json
 python -m pytest
 ```
 
-With `--out`, the scan also writes a readable HTML report (`reports/x.html`) and a review sheet (`reports/x-review.csv`) that opens in Excel. Fill in the `verdict` column with correct, wrong or unsure to measure precision on a real site. To rebuild both from an existing report, run `python -m qfscan view reports/x.json`.
+Each scan saves its report as `reports/<site>_<date>_<time>.json`, so earlier reports are never replaced. Use `--out` to pick a name. If that file already exists, the scanner adds `_2`, `_3` and so on, unless you pass `--overwrite`.
+
+The scan also writes a readable HTML report (`reports/x.html`) and a review sheet (`reports/x-review.csv`) that opens in Excel. Fill in the `verdict` column with correct, wrong or unsure to measure precision on a real site. To rebuild both from an existing report, run `python -m qfscan view reports/x.json`.
 
 To scan a real site, pass its URL. Add `--brand "Name"` for brand or product names that should not count as English. The crawler respects robots.txt and waits half a second between requests.
 
