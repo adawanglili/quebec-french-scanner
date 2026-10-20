@@ -15,3 +15,4 @@ reports/
 Thumbs.db
 .vscode/
 .idea/
+*.egg-info/
