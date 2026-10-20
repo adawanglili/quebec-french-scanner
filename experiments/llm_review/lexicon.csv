@@ -1,0 +1,5 @@
+pattern,suggestion,lookup_en,kind,note
+mail|mails,courriel,email|mail,review,Email or a shopping centre. Check the context.
+chat|chats,clavardage,chat,review,Online chat or a cat. Check the context.
+booking|bookings,réservation,booking,review,A reservation or the Booking.com brand. Check the context.
+spam|spams,pourriel,spam,review,Junk email or the Spam brand. Check the context.
