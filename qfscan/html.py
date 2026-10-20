@@ -271,7 +271,7 @@ def render_html(report: dict) -> str:
 
 SHEET_COLUMNS = [
     "id", "severity", "type", "text", "element", "occurrences", "first_page",
-    "suggestion", "english_confidence", "verdict", "notes",
+    "context", "visibility", "suggestion", "english_confidence", "verdict", "notes",
 ]
 
 
