@@ -1,6 +1,6 @@
 pattern,suggestion,lookup_en,kind,note
 e-mail|email|emails|e-mails|émail,courriel,email|e-mail,tolerated,Common in usage. The OQLF recommends courriel.
-mail|mails,courriel,email|mail,flag,
+mail|mails,courriel,email|mail,review,"Usually an anglicism for courriel, but in Quebec it also names shopping centres (Mail Champlain). Check the context."
 boîte mail|boite mail,boîte de courriel,email|mailbox,flag,
 newsletter|newsletters,infolettre,newsletter,flag,
 week-end|week-ends|weekend|weekends,fin de semaine,weekend,flag,

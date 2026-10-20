@@ -4,7 +4,7 @@ A language gap scanner for websites that serve Quebec. It finds pages and string
 
 The scanner supports human review. It does not give legal advice and it never says a site is "compliant." Results are risk findings or items that need review.
 
-This is a portfolio project by Lili Wang. It is a working prototype, not a product.
+This is an experimental project by Ada Lili Wang. It is a working prototype, not a product.
 
 ## Status
 
@@ -12,9 +12,9 @@ The crawler, all four checks, the reports (JSON, HTML and a CSV review sheet), t
 
 | Metric | Fixture result |
 | --- | --- |
-| Precision | 100% (13 of 13 findings correct) |
-| Recall | 100% (13 of 13 planted gaps found) |
-| Needs review | 3 of 3 judgment calls sent to review |
+| Precision | 100% (12 of 12 findings correct) |
+| Recall | 100% (12 of 12 planted gaps found) |
+| Needs review | 4 of 4 judgment calls sent to review |
 
 The fixture was built alongside the scanner, so these numbers show the checks work as designed. They do not show real world accuracy. Early real site scans have already found crawl and context problems, which are listed under [Known limits](#known-limits). A labelled real site evaluation comes next.
 
@@ -31,7 +31,7 @@ Everything is deterministic for now. A language model step for ambiguous terms m
 
 **Short strings.** Lingua alone is unreliable on interface text. It rates "Contact us" only 54% English. So short strings also use word frequency from `wordfreq`: each word leans English, leans French or is neutral. A short string counts as English when at least one word leans English and none leans French.
 
-**Terminology.** The OQLF data lists French terms and their English equivalents, but it does not list terms to avoid. So the scanner uses a curated list of common web anglicisms in `qfscan/lexicon/web_terms.csv`. At scan time each entry is matched to its GDT record, which is cited on the finding. A term with no record is sent to review instead. Some entries are marked tolerated (for example *email*, common in Quebec usage although the OQLF recommends *courriel*) or review (for example *date d'expiration*, which depends on context).
+**Terminology.** The OQLF data lists French terms and their English equivalents, but it does not list terms to avoid. So the scanner uses a curated list of common web anglicisms in `qfscan/lexicon/web_terms.csv`. At scan time each entry is matched to its GDT record, which is cited on the finding. A term with no record is sent to review instead. Some entries are marked tolerated (for example *email*, common in Quebec usage although the OQLF recommends *courriel*) or review (for example *date d'expiration*, which depends on context, and *mail*, which can mean email or a shopping centre such as Mail Champlain).
 
 **Crawling.** The crawler stays on one host, respects robots.txt, waits half a second between requests and stops at 50 pages (`--max-pages` to change). It asks for Quebec French first (`Accept-Language: fr-CA`) and visits French pages before English ones. English and French pages are paired by hreflang or by the language switcher link. If an English page links to a French page the crawl did not reach, it is reported as linked but not scanned, not as missing. If the start page redirects, the report says so.
 
@@ -102,7 +102,7 @@ To scan a real site, pass its URL. Add `--brand "Name"` for brand or product nam
 - Static HTML only. JavaScript is not run, except in pages you save from the browser.
 - No OCR for images or PDFs, and no transactional emails.
 - Collapsed menus are not detected as hidden.
-- The terminology list is curated and small. Words with more than one meaning can be flagged wrongly. For example *mail* is flagged as an anglicism for email, but in Quebec it also names shopping centres such as Mail Champlain.
+- The terminology list is curated and small. Words with more than one meaning can be flagged wrongly. Known cases such as *mail* go to review instead, so a real anglicism like "envoyez-nous un mail" is not flagged either.
 - Fixture results do not measure real world accuracy.
 
 ## Data sources

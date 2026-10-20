@@ -111,9 +111,9 @@ class TestCaseList(unittest.TestCase):
         self.assertEqual(counts[("leftover_english", "needs_review")], 2)
         self.assertEqual(counts[("metadata", "flag")], 3)
         self.assertEqual(counts[("metadata", "no_finding")], 2)
-        self.assertEqual(counts[("terminology", "flag")], 4)
+        self.assertEqual(counts[("terminology", "flag")], 3)
         self.assertEqual(counts[("terminology", "no_finding")], 2)
-        self.assertEqual(counts[("terminology", "needs_review")], 1)
+        self.assertEqual(counts[("terminology", "needs_review")], 2)
 
 
 class TestCasesArePlanted(unittest.TestCase):

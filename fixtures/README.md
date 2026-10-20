@@ -53,7 +53,7 @@ The full list with expected results is in [`expected.json`](expected.json). Each
 | MD-04 | `/fr/blogue/lancement/` | English meta description | Flag |
 | MD-05 | `/fr/a-propos/` | Correct lang, title and description | No finding |
 | TM-01 | `/fr/paiement/` | "panier d'achat" | No finding |
-| TM-02 | `/fr/confidentialite/` | "un mail" | Flag, suggest "courriel" |
+| TM-02 | `/fr/confidentialite/` | "un mail" | Needs review, suggest "courriel". *Mail* also names shopping centres in Quebec |
 | TM-03 | `/fr/contact/` | "Parking" | Flag, suggest "stationnement" |
 | TM-04 | `/fr/` | "le week-end" | Flag, suggest "fin de semaine" |
 | TM-05 | `/fr/blogue/lancement/` | "faire du shopping" | Flag, suggest "magasiner" |

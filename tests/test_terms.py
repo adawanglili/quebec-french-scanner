@@ -76,3 +76,9 @@ def test_single_words_with_other_meanings_are_not_matched():
 
 def test_curated_france_usage():
     assert forms("Notre tchat est ouvert.") == [("tchat", "clavardage")]
+
+
+def test_mail_goes_to_review():
+    # "mail" usually means courriel, but in Quebec it also names shopping centres.
+    matches = find_terms("Rendez-vous au Mail Champlain.", load_lexicon())
+    assert [(m.form, m.entry.kind) for m in matches] == [("Mail", "review")]
