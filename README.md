@@ -8,7 +8,7 @@ This is a portfolio project by Lili Wang. It is a working prototype, not a produ
 
 ## Status
 
-The crawler, all four checks, the JSON report and the scorer work end to end. On the fixture site the scanner finds every planted gap with no false positives:
+The crawler, all four checks, the reports (JSON, HTML and a CSV review sheet), the local scan page, saved page scanning and the scorer work end to end. On the fixture site the scanner finds every planted gap with no false positives:
 
 | Metric | Fixture result |
 | --- | --- |
@@ -16,7 +16,7 @@ The crawler, all four checks, the JSON report and the scorer work end to end. On
 | Recall | 100% (13 of 13 planted gaps found) |
 | Needs review | 3 of 3 judgment calls sent to review |
 
-The fixture was built alongside the scanner, so these numbers show the checks work as designed. They do not show real world accuracy. Real site tests come next.
+The fixture was built alongside the scanner, so these numbers show the checks work as designed. They do not show real world accuracy. Early real site scans have already found crawl and context problems, which are listed under [Known limits](#known-limits). A labelled real site evaluation comes next.
 
 ## What it checks
 
@@ -27,11 +27,17 @@ The fixture was built alongside the scanner, so these numbers show the checks wo
 | Metadata | English page title or meta description, missing or wrong `lang` |
 | OQLF terminology | Common web anglicisms, with a Quebec French suggestion and the GDT record cited |
 
-Everything is deterministic for now. A language model confirm step for terminology is planned.
+Everything is deterministic for now. A language model step for ambiguous terms may be tested later, once a labelled real site evaluation set exists to measure it against.
 
 **Short strings.** Lingua alone is unreliable on interface text. It rates "Contact us" only 54% English. So short strings also use word frequency from `wordfreq`: each word leans English, leans French or is neutral. A short string counts as English when at least one word leans English and none leans French.
 
-**Terminology.** The OQLF data lists French terms and their English equivalents, but it does not list terms to avoid. So the scanner uses a curated list of common web anglicisms in `qfscan/lexicon/web_terms.csv`. At scan time each entry is matched to its GDT record, which is cited on the finding. A term with no record is sent to review instead.
+**Terminology.** The OQLF data lists French terms and their English equivalents, but it does not list terms to avoid. So the scanner uses a curated list of common web anglicisms in `qfscan/lexicon/web_terms.csv`. At scan time each entry is matched to its GDT record, which is cited on the finding. A term with no record is sent to review instead. Some entries are marked tolerated (for example *email*, common in Quebec usage although the OQLF recommends *courriel*) or review (for example *date d'expiration*, which depends on context).
+
+**Crawling.** The crawler stays on one host, respects robots.txt, waits half a second between requests and stops at 50 pages (`--max-pages` to change). It asks for Quebec French first (`Accept-Language: fr-CA`) and visits French pages before English ones. English and French pages are paired by hreflang or by the language switcher link. If an English page links to a French page the crawl did not reach, it is reported as linked but not scanned, not as missing. If the start page redirects, the report says so.
+
+**Hidden text.** English text inside elements that are hidden or meant only for screen readers is still reported, with a "Hidden on screen" or "Screen reader only" label so a reviewer knows why it may not be visible on the page.
+
+**Blocked sites.** If a site refuses the request (for example HTTP 403), the scan stops with a clear error instead of writing an empty report. The scanner does not disguise itself as a browser.
 
 ## Repo layout
 
@@ -41,9 +47,12 @@ qfscan/
   text.py            extracts visible text and decides if a string is English
   terms.py           terminology check against the GDT records
   lexicon/web_terms.csv   curated list of common web anglicisms
+  files.py           scans pages saved from a browser
   checks.py          runs the checks and merges repeated findings
   rules.py           why each finding matters, its reference and the fix
   report.py          builds the JSON report
+  html.py            builds the HTML report and the CSV review sheet
+  server.py          local web page for running scans
   score.py           scores a report against fixtures/expected.json
 fixtures/
   build_fixture.py   builds the fake bilingual test site
@@ -53,6 +62,7 @@ scripts/
   download_oqlf_data.py   fetches the OQLF data into data/raw/
 tests/
   test_fixture.py    checks the fixture against expected.json
+  test_*.py          crawl, checks, terms, saved pages, CLI and server tests
 data/raw/            downloaded data (not committed)
 ```
 
@@ -85,7 +95,15 @@ The scan also writes a readable HTML report (`reports/x.html`) and a review shee
 
 **Scan saved pages.** Some sites block automated tools. For those, open each page in your browser, press Ctrl+S and choose "Webpage, complete". Save the English and French versions. Then run `python -m qfscan scan-files path/to/folder`, or use the "Scan saved pages" form on the scan page. Chrome saves the page as you see it, so text added by JavaScript is checked too. The scanner reads each page's original address from the saved file, so English and French pages are still matched.
 
-To scan a real site, pass its URL. Add `--brand "Name"` for brand or product names that should not count as English. The crawler respects robots.txt and waits half a second between requests.
+To scan a real site, pass its URL. Add `--brand "Name"` for brand or product names that should not count as English (repeat it for several). `--ignore-robots` exists only for scanning your own site. Only scan sites you are allowed to scan, and treat every result as a candidate for human review.
+
+## Known limits
+
+- Static HTML only. JavaScript is not run, except in pages you save from the browser.
+- No OCR for images or PDFs, and no transactional emails.
+- Collapsed menus are not detected as hidden.
+- The terminology list is curated and small. Words with more than one meaning can be flagged wrongly. For example *mail* is flagged as an anglicism for email, but in Quebec it also names shopping centres such as Mail Champlain.
+- Fixture results do not measure real world accuracy.
 
 ## Data sources
 
