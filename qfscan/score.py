@@ -25,7 +25,7 @@ CATEGORY_TYPES = {
         "wrong_lang_attribute", "missing_lang_attribute", "missing_title",
         "leftover_english_title", "missing_meta_description", "leftover_english_metadata",
     },
-    "terminology": {"terminology", "terminology_review"},
+    "terminology": {"terminology", "terminology_review", "france_french_term"},
 }
 
 

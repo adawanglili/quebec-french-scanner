@@ -36,6 +36,7 @@ WORD_MARGIN = 1.0  # zipf difference needed for a word to lean one way
 EMAIL = re.compile(r"\S+@\S+")
 URL = re.compile(r"https?://\S+|www\.\S+")
 HAS_DIGIT = re.compile(r"\d")
+FILE_NAME = re.compile(r"\.(png|jpe?g|gif|webp|svg|avif|bmp|tiff?)$", re.IGNORECASE)
 
 
 @dataclass
@@ -108,7 +109,7 @@ def extract_units(html: str) -> list[TextUnit]:
             units.append(TextUnit(direct, describe(el), el.name, "text"))
         for attr in TEXT_ATTRIBUTES:
             value = clean(el.get(attr) or "")
-            if value:
+            if value and not FILE_NAME.search(value):  # an image file name is not text to translate
                 units.append(TextUnit(value, f"{describe(el)}@{attr}", el.name, attr))
         if el.name == "input" and (el.get("type") or "").lower() in BUTTON_INPUT_TYPES:
             value = clean(el.get("value") or "")

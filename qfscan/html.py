@@ -28,6 +28,7 @@ TYPE_LABELS = {
     "tolerated_anglicism": "Tolerated borrowing",
     "terminology_review": "Term to check in context",
     "possible_quoted_title": "Possible title of a work",
+    "france_french_term": "France French term",
 }
 
 CSS = """

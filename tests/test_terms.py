@@ -62,3 +62,17 @@ def test_every_entry_has_a_gdt_record():
 def test_records_match_expected(form, record):
     entry = next(e for e in load_lexicon() if form in e.forms)
     assert f"/fiche/{record}/" in entry.gdt_record
+
+
+@needs_data
+def test_france_terms_from_gdt():
+    assert forms("Appelez notre numéro vert.") == [("numéro vert", "numéro sans frais")]
+    assert forms("Rangez-le dans un abri de jardin.") == [("abri de jardin", "cabanon")]
+
+
+def test_single_words_with_other_meanings_are_not_matched():
+    assert forms("Consultez le menu du jour. Le président parle.") == []
+
+
+def test_curated_france_usage():
+    assert forms("Notre tchat est ouvert.") == [("tchat", "clavardage")]

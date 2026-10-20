@@ -88,7 +88,12 @@ def check_missing_french(result: CrawlResult) -> list[Finding]:
     ]
 
 
-TERM_TYPES = {"flag": "terminology", "tolerated": "tolerated_anglicism", "review": "terminology_review"}
+TERM_TYPES = {
+    "flag": "terminology",
+    "tolerated": "tolerated_anglicism",
+    "review": "terminology_review",
+    "france": "france_french_term",
+}
 
 
 def term_findings(text: str, element: str, page: Page) -> list[Finding]:

@@ -14,6 +14,12 @@ Kinds:
   flag       report as a finding
   tolerated  common in Quebec usage, report as needs review
   review     depends on context, report as needs review
+  france     France French term found in the GDT, report as needs review
+
+France French terms are also taken straight from the GDT: records that label
+one term [France] and another [Québec/Canada]. Only terms of two words or
+more are used. Single words like "menu" or "président" have other common
+meanings and would cause false alarms.
 """
 
 from __future__ import annotations
@@ -29,6 +35,8 @@ ROOT = Path(__file__).resolve().parent.parent
 LEXICON = Path(__file__).resolve().parent / "lexicon" / "web_terms.csv"
 DATA_DIR = ROOT / "data" / "raw"
 PREFERRED_LABELS = {"Québec/Canada", "Québec", "recommandé", "normalisé"}
+FRANCE_LABELS = {"France", "France/Europe", "France,Belgique", "Europe"}
+QUEBEC_LABELS = {"Québec/Canada", "Québec", "Canada"}
 
 
 @dataclass
@@ -71,12 +79,10 @@ def find_records_file(data_dir: Path = DATA_DIR) -> Path | None:
     return files[-1] if files else None
 
 
-def resolve(entries: list[TermEntry], records_file: Path | None) -> None:
+def resolve(entries: list[TermEntry], rows: list[dict]) -> None:
     """Attach the best GDT record to each entry, in place."""
-    if not records_file:
+    if not rows:
         return
-    with records_file.open(encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
     parsed = [(split_terms(r["Termes_francais"]), {t for t, _ in split_terms(r["Termes_anglais"])}, r) for r in rows]
     for entry in entries:
         wanted_en = {w.lower() for w in entry.lookup_en}
@@ -102,6 +108,39 @@ def resolve(entries: list[TermEntry], records_file: Path | None) -> None:
             entry.gdt_terms = best["Termes_francais"]
 
 
+def read_records(records_file: Path | None) -> list[dict]:
+    if not records_file:
+        return []
+    with records_file.open(encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def france_entries(rows: list[dict], known_forms: set[str]) -> list[TermEntry]:
+    """France French terms (two words or more) with their Quebec equivalent."""
+    entries: dict[str, TermEntry] = {}
+    for row in rows:
+        terms = split_terms(row["Termes_francais"])
+        quebec = [t for t, labels in terms if QUEBEC_LABELS & set(labels)]
+        if not quebec:
+            continue
+        for term, labels in terms:
+            if not FRANCE_LABELS & set(labels) or len(term.split()) < 2:
+                continue
+            if term in known_forms or term in quebec or term in entries:
+                continue
+            entries[term] = TermEntry(
+                forms=[term],
+                suggestion=quebec[0],
+                lookup_en=[],
+                kind="france",
+                note="Labelled France usage in the GDT. The same record gives the Quebec term.",
+                pattern=re.compile(rf"(?<![\w-]){re.escape(term)}(?![\w-])", re.IGNORECASE),
+                gdt_record=row["URL_fiche"] or None,
+                gdt_terms=row["Termes_francais"],
+            )
+    return list(entries.values())
+
+
 @lru_cache(maxsize=1)
 def load_lexicon(lexicon: Path = LEXICON, data_dir: Path = DATA_DIR) -> tuple[TermEntry, ...]:
     entries = []
@@ -117,7 +156,9 @@ def load_lexicon(lexicon: Path = LEXICON, data_dir: Path = DATA_DIR) -> tuple[Te
                 note=row["note"].strip(),
                 pattern=re.compile(rf"(?<![\w-])(?:{alternation})(?![\w-])", re.IGNORECASE),
             ))
-    resolve(entries, find_records_file(data_dir))
+    rows = read_records(find_records_file(data_dir))
+    resolve(entries, rows)
+    entries += france_entries(rows, {f.lower() for e in entries for f in e.forms})
     # Longest forms first, so "faire du shopping" wins over "shopping".
     entries.sort(key=lambda e: -max(len(f) for f in e.forms))
     return tuple(entries)

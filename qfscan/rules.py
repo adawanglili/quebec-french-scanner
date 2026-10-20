@@ -42,6 +42,11 @@ RULES = {
         "reference": "OQLF Grand dictionnaire terminologique. The record is linked in the evidence.",
         "fix": "Check the meaning in context. The note explains what to look for.",
     },
+    "france_french_term": {
+        "why": "A term the OQLF labels as France usage. Quebec readers may expect the Quebec term.",
+        "reference": "OQLF Grand dictionnaire terminologique. The record is linked in the evidence.",
+        "fix": "Consider the Quebec term if the page is meant for Quebec readers.",
+    },
     "wrong_lang_attribute": {
         "why": "The page is French but the html lang attribute says otherwise.",
         "reference": "Not a Charter rule. WCAG 2.2 success criterion 3.1.1 (Language of Page). Screen readers and search engines use it.",

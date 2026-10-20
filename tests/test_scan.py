@@ -76,3 +76,9 @@ def test_judge_language(text, english):
 
 def test_brand_only_text_is_skipped():
     assert judge_language("Northwind", {"northwind"}) is None
+
+
+def test_image_file_names_are_not_text():
+    from qfscan.text import extract_units
+    units = extract_units('<body><img alt="teosyal puresense 1ml.jpg"><img alt="Femme qui sourit"></body>')
+    assert [u.text for u in units] == ["Femme qui sourit"]
