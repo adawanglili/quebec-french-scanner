@@ -29,7 +29,7 @@
 
     {"id": "MD-01", "category": "metadata", "page": "/fr/conditions/", "element": "html@lang", "text": "en", "expected": "flag", "finding": "wrong_lang_attribute"},
     {"id": "MD-02", "category": "metadata", "page": "/fr/produits/", "element": "title", "text": "Our coffees | Northwind", "expected": "flag", "finding": "leftover_english_title"},
-    {"id": "MD-03", "category": "metadata", "page": "/fr/confidentialite/", "element": "meta[name=description]", "text": null, "expected": "flag", "finding": "missing_meta_description"},
+    {"id": "MD-03", "category": "metadata", "page": "/fr/confidentialite/", "element": "meta[name=description]", "text": null, "expected": "no_finding", "note": "No meta description. Out of scope since 2026-10-19: an SEO issue, not a French language gap."},
     {"id": "MD-04", "category": "metadata", "page": "/fr/blogue/lancement/", "element": "meta[name=description]", "text": "Our coffee is now available online, with delivery across Quebec.", "expected": "flag", "finding": "leftover_english_metadata"},
     {"id": "MD-05", "category": "metadata", "page": "/fr/a-propos/", "element": "head", "text": null, "expected": "no_finding", "note": "lang fr-CA, French title and French description."},
 

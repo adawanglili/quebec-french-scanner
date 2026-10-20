@@ -12,8 +12,8 @@ The crawler, all four checks, the JSON report and the scorer work end to end. On
 
 | Metric | Fixture result |
 | --- | --- |
-| Precision | 100% (14 of 14 findings correct) |
-| Recall | 100% (14 of 14 planted gaps found) |
+| Precision | 100% (13 of 13 findings correct) |
+| Recall | 100% (13 of 13 planted gaps found) |
 | Needs review | 3 of 3 judgment calls sent to review |
 
 The fixture was built alongside the scanner, so these numbers show the checks work as designed. They do not show real world accuracy. Real site tests come next.
@@ -24,7 +24,7 @@ The fixture was built alongside the scanner, so these numbers show the checks wo
 | --- | --- |
 | Missing French page | An English page has no French equivalent |
 | Leftover English | English strings on French pages: buttons, menus, errors, alt text |
-| Metadata | Missing or English title and description, missing or wrong `lang` |
+| Metadata | English page title or meta description, missing or wrong `lang` |
 | OQLF terminology | Common web anglicisms, with a Quebec French suggestion and the GDT record cited |
 
 Everything is deterministic for now. A language model confirm step for terminology is planned.

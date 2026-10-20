@@ -3,7 +3,7 @@
 Checks in this module:
   * missing French page (from the crawl pairing)
   * leftover English in visible text and attributes of French pages
-  * metadata of French pages: lang attribute, title, meta description
+  * metadata of French pages: lang attribute, English title or meta description
 
 A string repeated on many pages, like a shared menu item, is one finding with
 a list of pages.
@@ -148,17 +148,15 @@ def check_metadata(page: Page, brand: set[str]) -> list[Finding]:
         findings.append(Finding("wrong_lang_attribute", FINDING, None, "html@lang", [page.url],
                                 {"lang": page.html_lang}))
 
-    if not page.title:
-        findings.append(Finding("missing_title", FINDING, None, "title", [page.url]))
-    else:
+    # A missing title or meta description is an SEO issue, not a French
+    # language gap, so it is not reported (decision of 2026-10-19).
+    if page.title:
         verdict = judge_language(page.title, brand)
         if verdict and verdict.is_english:
             findings.append(Finding("leftover_english_title", FINDING, page.title, "title", [page.url],
                                     {"english_confidence": verdict.english_confidence}))
 
-    if not page.description:
-        findings.append(Finding("missing_meta_description", FINDING, None, "meta[name=description]", [page.url]))
-    else:
+    if page.description:
         verdict = judge_language(page.description, brand)
         if verdict and verdict.is_english:
             findings.append(Finding("leftover_english_metadata", FINDING, page.description,

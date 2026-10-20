@@ -22,8 +22,8 @@ CATEGORY_TYPES = {
     "missing_french_page": {"missing_french_page"},
     "leftover_english": {"leftover_english", "possible_quoted_title", "tolerated_anglicism"},
     "metadata": {
-        "wrong_lang_attribute", "missing_lang_attribute", "missing_title",
-        "leftover_english_title", "missing_meta_description", "leftover_english_metadata",
+        "wrong_lang_attribute", "missing_lang_attribute",
+        "leftover_english_title", "leftover_english_metadata",
     },
     "terminology": {"terminology", "terminology_review", "france_french_term"},
 }

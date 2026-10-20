@@ -49,7 +49,7 @@ The full list with expected results is in [`expected.json`](expected.json). Each
 | LE-09 | `/fr/blogue/lancement/` | English book title in italics | Needs review |
 | MD-01 | `/fr/conditions/` | `<html lang="en">` | Flag |
 | MD-02 | `/fr/produits/` | English title | Flag |
-| MD-03 | `/fr/confidentialite/` | No meta description | Flag |
+| MD-03 | `/fr/confidentialite/` | No meta description | No finding. Out of scope, an SEO issue |
 | MD-04 | `/fr/blogue/lancement/` | English meta description | Flag |
 | MD-05 | `/fr/a-propos/` | Correct lang, title and description | No finding |
 | TM-01 | `/fr/paiement/` | "panier d'achat" | No finding |

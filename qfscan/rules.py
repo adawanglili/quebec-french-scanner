@@ -57,20 +57,10 @@ RULES = {
         "reference": "Not a Charter rule. WCAG 2.2 success criterion 3.1.1 (Language of Page).",
         "fix": "Set lang=\"fr-CA\" on the html element.",
     },
-    "missing_title": {
-        "why": "The French page has no title.",
-        "reference": "Not a Charter rule. Browsers and search results show the title to visitors.",
-        "fix": "Add a French title.",
-    },
     "leftover_english_title": {
         "why": "The French page title is in English. Visitors see it in browser tabs and search results.",
         "reference": CHARTER_S52,
         "fix": "Translate the title.",
-    },
-    "missing_meta_description": {
-        "why": "The French page has no meta description. Search engines may show other text instead.",
-        "reference": "Not a Charter rule. Search results often show this text to French speakers.",
-        "fix": "Add a French meta description.",
     },
     "leftover_english_metadata": {
         "why": "The French page meta description is in English. Search results may show it.",

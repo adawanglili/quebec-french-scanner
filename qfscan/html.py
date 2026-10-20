@@ -20,8 +20,6 @@ TYPE_LABELS = {
     "leftover_english": "English text on a French page",
     "leftover_english_title": "English page title",
     "leftover_english_metadata": "English meta description",
-    "missing_meta_description": "Missing meta description",
-    "missing_title": "Missing page title",
     "wrong_lang_attribute": "Wrong language tag",
     "missing_lang_attribute": "Missing language tag",
     "terminology": "Quebec French term",
