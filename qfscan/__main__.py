@@ -5,6 +5,7 @@ Examples:
     python -m qfscan scan http://localhost:8000/ --out reports/fixture.json
     python -m qfscan score reports/fixture.json
     python -m qfscan view reports/fixture.json
+    python -m qfscan serve
     python -m qfscan scan https://example.com/ --brand "Example Inc" --max-pages 30
 """
 
@@ -113,6 +114,12 @@ def cmd_view(args) -> int:
     return 0
 
 
+def cmd_serve(args) -> int:
+    from .server import serve
+    serve(port=args.port, open_browser=not args.no_browser)
+    return 0
+
+
 def cmd_score(args) -> int:
     result = score(load(args.report), load(args.expected), set(args.category) if args.category else None)
     if args.json:
@@ -139,6 +146,11 @@ def main(argv: list[str] | None = None) -> int:
     view = sub.add_parser("view", help="Make a readable HTML report and a review sheet from a JSON report")
     view.add_argument("report")
     view.set_defaults(func=cmd_view)
+
+    srv = sub.add_parser("serve", help="Open a local web page for running scans")
+    srv.add_argument("--port", type=int, default=8765)
+    srv.add_argument("--no-browser", action="store_true", help="Do not open the browser")
+    srv.set_defaults(func=cmd_serve)
 
     sc = sub.add_parser("score", help="Score a report against the fixture ground truth")
     sc.add_argument("report")

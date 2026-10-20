@@ -81,6 +81,8 @@ Each scan saves its report as `reports/<site>_<date>_<time>.json`, so earlier re
 
 The scan also writes a readable HTML report (`reports/x.html`) and a review sheet (`reports/x-review.csv`) that opens in Excel. Fill in the `verdict` column with correct, wrong or unsure to measure precision on a real site. To rebuild both from an existing report, run `python -m qfscan view reports/x.json`.
 
+**Scan from a web page.** Run `python -m qfscan serve`. Your browser opens a local page where you type a site address, click Scan and watch the progress. Reports open in a new tab and are listed on the same page. The page only runs on your own computer. Leave the terminal window open while you use it.
+
 To scan a real site, pass its URL. Add `--brand "Name"` for brand or product names that should not count as English. The crawler respects robots.txt and waits half a second between requests.
 
 ## Data sources

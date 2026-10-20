@@ -232,6 +232,7 @@ def crawl(
     delay: float = 0.5,
     respect_robots: bool = True,
     client: httpx.Client | None = None,
+    progress=None,
 ) -> CrawlResult:
     """Breadth first crawl from start_url, then pair the pages."""
     start_url = normalize_url(start_url)
@@ -273,6 +274,8 @@ def crawl(
             html = response.text if response.status_code == 200 else ""
             page = parse_page(final_url, response.status_code, html)
             pages[final_url] = page
+            if progress:
+                progress(len(pages), max_pages, final_url)
 
             for target in [*page.links, *page.alternates.values()]:
                 if target not in seen and same_site(target, start_url) and looks_like_html(target):
