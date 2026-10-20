@@ -83,6 +83,8 @@ The scan also writes a readable HTML report (`reports/x.html`) and a review shee
 
 **Scan from a web page.** Run `python -m qfscan serve`. Your browser opens a local page where you type a site address, click Scan and watch the progress. Reports open in a new tab and are listed on the same page. The page only runs on your own computer. Leave the terminal window open while you use it.
 
+**Scan saved pages.** Some sites block automated tools. For those, open each page in your browser, press Ctrl+S and choose "Webpage, complete". Save the English and French versions. Then run `python -m qfscan scan-files path/to/folder`, or use the "Scan saved pages" form on the scan page. Chrome saves the page as you see it, so text added by JavaScript is checked too. The scanner reads each page's original address from the saved file, so English and French pages are still matched.
+
 To scan a real site, pass its URL. Add `--brand "Name"` for brand or product names that should not count as English. The crawler respects robots.txt and waits half a second between requests.
 
 ## Data sources

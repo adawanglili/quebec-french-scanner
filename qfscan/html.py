@@ -222,8 +222,11 @@ def render_html(report: dict) -> str:
     )
     unvisited = s.get("french_pages_linked_not_crawled") or 0
     if unvisited:
-        redirect += (f'<div class="note">{unvisited} English pages link to a French page that the scan did not reach '
-                     'before the page limit. They are not counted as missing.</div>')
+        redirect += (f'<div class="note">{unvisited} English pages link to a French page that was not scanned. '
+                     'They are not counted as missing.</div>')
+    if report.get("source") == "saved_pages":
+        redirect += ('<div class="note">This report comes from pages saved from a browser, not from a live crawl. '
+                     'Only the saved pages were checked.</div>')
     french_only = (
         '<div class="note">No English pages were found. This looks like a French only site, '
         'so the missing French page check does not apply. The other checks still ran on every French page.</div>'
@@ -250,7 +253,7 @@ def render_html(report: dict) -> str:
 <body>
 <div class="wrap">
 <h1>French language scan: {escape(host)}</h1>
-<div class="meta">Started at {escape(report["start_url"])} · {escape(report["scanned_at"])} · {escape(report["tool"])} · {s["pages_crawled"]} pages crawled</div>
+<div class="meta">{"Saved pages from" if report.get("source") == "saved_pages" else "Started at"} {escape(report["start_url"])} · {escape(report["scanned_at"])} · {escape(report["tool"])} · {s["pages_crawled"]} pages crawled</div>
 <div class="note">{escape(report["disclaimer"])}</div>
 <div class="stats">{stat_html}</div>
 {cap}

@@ -22,6 +22,7 @@ from urllib.parse import unquote, urlsplit
 
 from .checks import run_checks
 from .crawl import DEFAULT_MAX_PAGES, crawl
+from .files import scan_saved_pages
 from .html import CSS as REPORT_CSS
 from .html import render_html, write_sheet
 from .report import build_report
@@ -31,11 +32,13 @@ PORT = 8765
 SERVED_SUFFIXES = {".html": "text/html; charset=utf-8", ".csv": "text/csv; charset=utf-8",
                    ".json": "application/json; charset=utf-8"}
 
+MAX_UPLOAD_BYTES = 80 * 1024 * 1024
 JOBS: dict[str, dict] = {}
 JOB_LOCK = threading.Lock()
 
 
-def run_job(job_id: str, url: str, brands: list[str], max_pages: int, reports_dir: Path) -> None:
+def run_job(job_id: str, url: str, brands: list[str], max_pages: int, reports_dir: Path,
+            saved_pages: list[tuple[str, str]] | None = None) -> None:
     from .__main__ import report_path, scan_failure_message  # avoid a circular import
 
     job = JOBS[job_id]
@@ -44,13 +47,20 @@ def run_job(job_id: str, url: str, brands: list[str], max_pages: int, reports_di
         job.update(message=f"Crawling page {done} of up to {limit}", detail=page_url)
 
     try:
-        job.update(state="running", message="Starting the crawl")
-        result = crawl(url, max_pages=max_pages, progress=progress)
+        if saved_pages is not None:
+            job.update(state="running", message=f"Reading {len(saved_pages)} saved pages")
+            result = scan_saved_pages(saved_pages)
+            url = result.start_url
+        else:
+            job.update(state="running", message="Starting the crawl")
+            result = crawl(url, max_pages=max_pages, progress=progress)
         if not any(p.status == 200 for p in result.pages.values()):
             job.update(state="failed", message=scan_failure_message(result))
             return
         job.update(message="Checking the French pages", detail="")
         report = build_report(result, run_checks(result, brands=brands or None))
+        if saved_pages is not None:
+            report["source"] = "saved_pages"
         reports_dir.mkdir(parents=True, exist_ok=True)
         out = report_path(url, str(reports_dir / default_name(url)))
         out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -162,14 +172,58 @@ def render_home(reports_dir: Path) -> str:
   </div>
   <button class="go" type="submit">Scan</button>
 </form>
+<h2>Or scan saved pages</h2>
+<p class="muted">For sites that block the scanner. Open each page in your browser, press Ctrl+S and
+choose "Webpage, complete". Save the English and French versions. Then pick the saved files or their folder here.</p>
+<form id="files">
+  <label>Saved pages <small>Pick .html files, or use the folder button</small>
+    <input name="pages" type="file" multiple accept=".html,.htm"></label>
+  <label>Or a whole folder
+    <input name="folder" type="file" webkitdirectory multiple></label>
+  <label>Brand or product names <small>Separate with commas.</small>
+    <input name="brands" placeholder="Northwind, Brew Club"></label>
+  <button class="go" type="submit">Scan saved pages</button>
+</form>
 <div id="status" role="status" aria-live="polite"></div>
 <h2>Reports</h2>
 <div id="reports">{table}</div>
 </div>
 <script>
 var form = document.getElementById('scan');
+var filesForm = document.getElementById('files');
 var statusEl = document.getElementById('status');
 var button = form.querySelector('button');
+var filesButton = filesForm.querySelector('button');
+function busy(on) {{ button.disabled = on; filesButton.disabled = on; }}
+function start(route, data) {{
+  busy(true);
+  fetch(route, {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify(data) }})
+    .then(function (r) {{ return r.json(); }})
+    .then(function (job) {{
+      if (job.error) {{ show(job.error, '', true); busy(false); return; }}
+      poll(job.id);
+    }})
+    .catch(function () {{ show('Could not reach the scanner. Is it still running?', '', true); busy(false); }});
+}}
+function brandList(input) {{
+  return input.value.split(',').map(function (s) {{ return s.trim(); }}).filter(Boolean);
+}}
+filesForm.addEventListener('submit', function (e) {{
+  e.preventDefault();
+  var picked = Array.prototype.slice.call(filesForm.pages.files)
+    .concat(Array.prototype.slice.call(filesForm.folder.files))
+    .filter(function (f) {{
+      var path = (f.webkitRelativePath || f.name).split(String.fromCharCode(92)).join('/');
+      return /[.]html?$/i.test(f.name) && path.indexOf('_files/') === -1;
+    }});
+  if (!picked.length) {{ show('Choose at least one saved .html page.', '', true); return; }}
+  show('Reading ' + picked.length + ' saved pages...');
+  Promise.all(picked.map(function (f) {{
+    return f.text().then(function (t) {{ return {{ name: f.webkitRelativePath || f.name, content: t }}; }});
+  }})).then(function (files) {{
+    start('/scan-files', {{ files: files, brands: brandList(filesForm.brands) }});
+  }});
+}});
 function show(msg, detail, failed) {{
   statusEl.className = failed ? 'failed' : '';
   statusEl.innerHTML = '';
@@ -178,20 +232,12 @@ function show(msg, detail, failed) {{
 }}
 form.addEventListener('submit', function (e) {{
   e.preventDefault();
-  var data = {{
-    url: form.url.value.trim(),
-    brands: form.brands.value.split(',').map(function (s) {{ return s.trim(); }}).filter(Boolean),
-    max_pages: parseInt(form.max_pages.value, 10) || {DEFAULT_MAX_PAGES}
-  }};
-  button.disabled = true;
   show('Starting the scan...');
-  fetch('/scan', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify(data) }})
-    .then(function (r) {{ return r.json(); }})
-    .then(function (job) {{
-      if (job.error) {{ show(job.error, '', true); button.disabled = false; return; }}
-      poll(job.id);
-    }})
-    .catch(function () {{ show('Could not reach the scanner. Is it still running?', '', true); button.disabled = false; }});
+  start('/scan', {{
+    url: form.url.value.trim(),
+    brands: brandList(form.brands),
+    max_pages: parseInt(form.max_pages.value, 10) || {DEFAULT_MAX_PAGES}
+  }});
 }});
 function poll(id) {{
   fetch('/status/' + id).then(function (r) {{ return r.json(); }}).then(function (job) {{
@@ -200,11 +246,11 @@ function poll(id) {{
       var a = document.createElement('a'); a.href = '/reports/' + job.report; a.target = '_blank';
       a.textContent = 'Open the report'; statusEl.appendChild(a);
       window.open('/reports/' + job.report, '_blank');
-      button.disabled = false;
+      busy(false);
       fetch('/reports-table').then(function (r) {{ return r.text(); }}).then(function (html) {{
         document.getElementById('reports').innerHTML = html; }});
     }} else if (job.state === 'failed') {{
-      show(job.message, '', true); button.disabled = false;
+      show(job.message, '', true); busy(false);
     }} else {{
       show(job.message, job.detail); setTimeout(function () {{ poll(id); }}, 800);
     }}
@@ -254,24 +300,39 @@ def make_handler(reports_dir: Path):
             return self.send(404, "Not found")
 
         def do_POST(self):
-            if urlsplit(self.path).path != "/scan":
+            route = urlsplit(self.path).path
+            if route not in ("/scan", "/scan-files"):
                 return self.send(404, "Not found")
             try:
                 length = int(self.headers.get("Content-Length", "0"))
+                if length > MAX_UPLOAD_BYTES:
+                    return self.send_json(413, {"error": "Too much data. Scan fewer pages at a time."})
                 data = json.loads(self.rfile.read(length) or b"{}")
             except ValueError:
                 return self.send_json(400, {"error": "The request was not valid."})
-            url = str(data.get("url", "")).strip()
-            if urlsplit(url).scheme not in ("http", "https") or not urlsplit(url).netloc:
-                return self.send_json(400, {"error": "Enter a full address that starts with http:// or https://"})
-            max_pages = max(1, min(int(data.get("max_pages") or DEFAULT_MAX_PAGES), 200))
             brands = [str(b) for b in data.get("brands") or [] if str(b).strip()]
+            url, max_pages, saved = "", DEFAULT_MAX_PAGES, None
+            if route == "/scan":
+                url = str(data.get("url", "")).strip()
+                if urlsplit(url).scheme not in ("http", "https") or not urlsplit(url).netloc:
+                    return self.send_json(400, {"error": "Enter a full address that starts with http:// or https://"})
+                max_pages = max(1, min(int(data.get("max_pages") or DEFAULT_MAX_PAGES), 200))
+            else:
+                saved = [
+                    (str(f.get("name", "page.html")), str(f.get("content", "")))
+                    for f in data.get("files") or []
+                    if str(f.get("name", "")).lower().endswith((".html", ".htm"))
+                    and "_files/" not in str(f.get("name", "")).replace("\\", "/")
+                ]
+                if not saved:
+                    return self.send_json(400, {"error": "Choose at least one saved .html page."})
             with JOB_LOCK:
                 if any(j["state"] in ("queued", "running") for j in JOBS.values()):
                     return self.send_json(409, {"error": "A scan is already running. Wait for it to finish."})
                 job_id = uuid.uuid4().hex[:12]
                 JOBS[job_id] = {"id": job_id, "state": "queued", "message": "Queued", "detail": ""}
-            threading.Thread(target=run_job, args=(job_id, url, brands, max_pages, reports_dir), daemon=True).start()
+            threading.Thread(target=run_job, args=(job_id, url, brands, max_pages, reports_dir, saved),
+                             daemon=True).start()
             return self.send_json(202, {"id": job_id})
 
     return Handler

@@ -6,6 +6,7 @@ Examples:
     python -m qfscan score reports/fixture.json
     python -m qfscan view reports/fixture.json
     python -m qfscan serve
+    python -m qfscan scan-files saved-pages/ --brand "Example Inc"
     python -m qfscan scan https://example.com/ --brand "Example Inc" --max-pages 30
 """
 
@@ -100,6 +101,31 @@ def cmd_scan(args) -> int:
     return 0
 
 
+def cmd_scan_files(args) -> int:
+    from .files import find_html_files, load_saved_pages
+    paths = [Path(p) for p in args.paths]
+    missing = [str(p) for p in paths if not p.exists()]
+    if missing:
+        print(f"Not found: {', '.join(missing)}", file=sys.stderr)
+        return 2
+    if not find_html_files(paths):
+        print("No saved pages found. Save pages from your browser as .html files first.", file=sys.stderr)
+        return 2
+    result = load_saved_pages(paths)
+    print(f"Read {len(result.pages)} saved pages.", file=sys.stderr)
+    report = build_report(result, run_checks(result, brands=args.brand))
+    report["source"] = "saved_pages"
+    out = report_path(result.start_url, args.out, args.overwrite)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"Report written to {out}", file=sys.stderr)
+    write_views(out, report)
+    s = report["summary"]
+    print(f"{s['pages_crawled']} pages, {s['pairs']} pairs, {s['findings']} findings, "
+          f"{s['needs_review']} needs review", file=sys.stderr)
+    return 0
+
+
 def write_views(json_path: Path, report: dict) -> None:
     html_path = json_path.with_suffix(".html")
     sheet_path = json_path.with_name(json_path.stem + "-review.csv")
@@ -142,6 +168,13 @@ def main(argv: list[str] | None = None) -> int:
     scan.add_argument("--brand", action="append", help="Brand or product name to ignore. Repeat for several.")
     scan.add_argument("--ignore-robots", action="store_true", help="Only for your own site")
     scan.set_defaults(func=cmd_scan)
+
+    files = sub.add_parser("scan-files", help="Scan pages saved from your browser (for sites that block scanners)")
+    files.add_argument("paths", nargs="+", help="Saved .html files or folders that contain them")
+    files.add_argument("--out", help="Report file name. Default: reports/<site>_<date>_<time>.json")
+    files.add_argument("--overwrite", action="store_true")
+    files.add_argument("--brand", action="append", help="Brand or product name to ignore. Repeat for several.")
+    files.set_defaults(func=cmd_scan_files)
 
     view = sub.add_parser("view", help="Make a readable HTML report and a review sheet from a JSON report")
     view.add_argument("report")
