@@ -128,6 +128,10 @@ def check_leftover_english(page: Page, brand: set[str]) -> list[Finding]:
             "english_words": verdict.english_words,
             "french_words": verdict.french_words,
         }
+        if unit.context:
+            evidence["context"] = unit.context
+        if unit.visibility:
+            evidence["visibility"] = unit.visibility
         if unit.tag in {"em", "i", "cite", "q"} and unit.kind == "text":
             findings.append(Finding("possible_quoted_title", NEEDS_REVIEW, unit.text, unit.element, [page.url], evidence))
         else:

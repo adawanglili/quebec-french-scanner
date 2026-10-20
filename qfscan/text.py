@@ -45,6 +45,8 @@ class TextUnit:
     element: str  # short description, like "nav a" or "img@alt"
     tag: str
     kind: str  # "text" or the attribute name
+    context: str = ""  # the surrounding sentence, to help find it on the page
+    visibility: str = ""  # "", "hidden" or "screen_reader"
 
 
 @dataclass
@@ -90,6 +92,39 @@ def describe(el: Tag) -> str:
     return f"{landmark} {name}" if landmark and landmark != el.name else name
 
 
+BLOCK_TAGS = {"p", "li", "td", "th", "dd", "dt", "h1", "h2", "h3", "h4", "h5", "h6",
+              "figcaption", "blockquote", "label", "button", "summary"}
+SCREEN_READER_CLASS = re.compile(r"visually-?hidden|sr-only|screen-?reader|offscreen|a11y-hidden", re.I)
+HIDDEN_STYLE = re.compile(r"display\s*:\s*none|visibility\s*:\s*hidden", re.I)
+
+
+def visibility_of(el: Tag) -> str:
+    """Tell whether the text is hidden on screen. Collapsed menus are not detected."""
+    for node in [el, *el.parents]:
+        if not isinstance(node, Tag) or node.name in ("html", "body"):
+            continue
+        if SCREEN_READER_CLASS.search(" ".join(node.get("class") or [])):
+            return "screen_reader"
+        if node.has_attr("hidden") or node.get("aria-hidden") == "true" or HIDDEN_STYLE.search(node.get("style") or ""):
+            return "hidden"
+    return ""
+
+
+def context_of(el: Tag, text: str) -> str:
+    """The text of the nearest block around the element, when it adds something."""
+    block = el if el.name in BLOCK_TAGS else el.find_parent(BLOCK_TAGS) or el.parent
+    if not isinstance(block, Tag):
+        return ""
+    full = clean(block.get_text(" "))
+    if not full or full == text:
+        return ""
+    if len(full) > 220:
+        at = full.find(text[:40])
+        start = max(0, at - 90) if at >= 0 else 0
+        full = ("… " if start else "") + full[start:start + 220].strip() + " …"
+    return full
+
+
 def extract_units(html: str) -> list[TextUnit]:
     soup = BeautifulSoup(html, "html.parser")
     body = soup.body or soup
@@ -105,16 +140,17 @@ def extract_units(html: str) -> list[TextUnit]:
                 if isinstance(c, NavigableString) and not isinstance(c, Comment)
             )
         )
+        seen_by = visibility_of(el)
         if direct:
-            units.append(TextUnit(direct, describe(el), el.name, "text"))
+            units.append(TextUnit(direct, describe(el), el.name, "text", context_of(el, direct), seen_by))
         for attr in TEXT_ATTRIBUTES:
             value = clean(el.get(attr) or "")
             if value and not FILE_NAME.search(value):  # an image file name is not text to translate
-                units.append(TextUnit(value, f"{describe(el)}@{attr}", el.name, attr))
+                units.append(TextUnit(value, f"{describe(el)}@{attr}", el.name, attr, "", seen_by))
         if el.name == "input" and (el.get("type") or "").lower() in BUTTON_INPUT_TYPES:
             value = clean(el.get("value") or "")
             if value:
-                units.append(TextUnit(value, f"{describe(el)}@value", el.name, "value"))
+                units.append(TextUnit(value, f"{describe(el)}@value", el.name, "value", "", seen_by))
     return units
 
 

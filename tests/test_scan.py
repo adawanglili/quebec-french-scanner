@@ -82,3 +82,13 @@ def test_image_file_names_are_not_text():
     from qfscan.text import extract_units
     units = extract_units('<body><img alt="teosyal puresense 1ml.jpg"><img alt="Femme qui sourit"></body>')
     assert [u.text for u in units] == ["Femme qui sourit"]
+
+
+def test_context_and_visibility_help_find_text():
+    from qfscan.text import extract_units
+    html = ('<body><div hidden><p>Un appareil certifié par l’<em>Refrigeration Institute</em> est sûr.</p></div>'
+            '<a href="#"><span class="visuallyhidden">Apple Store</span></a></body>')
+    units = {u.text: u for u in extract_units(html)}
+    em = units["Refrigeration Institute"]
+    assert em.visibility == "hidden" and "appareil certifié" in em.context
+    assert units["Apple Store"].visibility == "screen_reader"

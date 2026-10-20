@@ -99,13 +99,17 @@ def render_item(item: dict, review: bool) -> str:
     chips = [f'<span class="chip">{escape(item["element"])}</span>']
     if item["occurrences"] > 1:
         chips.append(f'<span class="chip">{item["occurrences"]} pages</span>')
+    if ev.get("visibility") == "screen_reader":
+        chips.append('<span class="chip">Screen reader only</span>')
+    elif ev.get("visibility") == "hidden":
+        chips.append('<span class="chip">Hidden on screen</span>')
     if "english_confidence" in ev:
         chips.append(f'<span class="chip">English {ev["english_confidence"]:.0%}</span>')
     rows.append(f'<div class="row">{"".join(chips)}</div>')
     if ev.get("suggestion"):
         rows.append(f'<div class="row"><b>Suggestion</b>{escape(ev["suggestion"])}</div>')
     if ev.get("context"):
-        rows.append(f'<div class="row"><b>Context</b>… {escape(ev["context"])} …</div>')
+        rows.append(f'<div class="row"><b>Context</b>{escape(ev["context"])}</div>')
     rows.append(f'<div class="row"><b>Why</b>{escape(item["why"] or "")}</div>')
     rows.append(f'<div class="row"><b>Fix</b>{escape(item["fix"] or "")}</div>')
     reference = escape(item["reference"] or "")
@@ -284,6 +288,8 @@ def write_sheet(report: dict, path: Path) -> int:
             "element": item["element"],
             "occurrences": item["occurrences"],
             "first_page": item["pages"][0],
+            "context": ev.get("context") or "",
+            "visibility": ev.get("visibility") or "",
             "suggestion": ev.get("suggestion") or "",
             "english_confidence": ev.get("english_confidence", ""),
             "verdict": "",
