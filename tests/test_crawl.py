@@ -65,3 +65,38 @@ def test_language_from_url(url, lang):
 def test_normalize_url():
     assert normalize_url("HTTP://Example.com#top") == "http://example.com/"
     assert normalize_url("https://example.com/a?b=1#c") == "https://example.com/a?b=1"
+
+
+def test_linked_french_page_not_crawled_is_not_missing():
+    from qfscan.crawl import Page, pair_pages
+    en = Page(url="https://x.ca/en/a/", status=200, language="en",
+              alternates={"fr": "https://x.ca/fr/a/", "en": "https://x.ca/en/a/"})
+    pairs = pair_pages({en.url: en})
+    assert pairs[0].fr == "https://x.ca/fr/a/" and pairs[0].method == "not_crawled"
+
+
+def test_asks_for_french_and_visits_french_pages_first():
+    import httpx
+    from qfscan.crawl import crawl
+
+    seen_headers = []
+    english_links = "".join(f'<a href="/en/p{i}/">p{i}</a>' for i in range(10))
+
+    def handler(request):
+        seen_headers.append(request.headers.get("accept-language", ""))
+        path = request.url.path
+        if path == "/robots.txt":
+            return httpx.Response(404)
+        if path.startswith("/fr/"):
+            return httpx.Response(200, html='<html lang="fr-CA"><body>Bonjour</body></html>')
+        slug = path.strip("/").split("/")[-1] or "home"
+        return httpx.Response(200, html=(
+            f'<html lang="en"><head><link rel="alternate" hreflang="fr" href="/fr/{slug}/"></head>'
+            f'<body>{english_links}</body></html>'))
+
+    client = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://x.ca")
+    result = crawl("https://x.ca/en/", max_pages=4, delay=0, client=client)
+    langs = [p.language for p in result.pages.values()]
+    assert seen_headers and all(h.startswith("fr-CA") for h in seen_headers)
+    assert langs.count("fr") >= 2  # French alternates were fetched before more English pages
+    assert not any(p.fr is None for p in result.pairs)

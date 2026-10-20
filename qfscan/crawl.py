@@ -24,6 +24,10 @@ from bs4 import BeautifulSoup
 from . import __version__
 
 USER_AGENT = f"qfscan/{__version__} (+https://github.com/adawanglili/quebec-french-scanner)"
+# Ask for Quebec French, like a browser set to French. Sites that pick the
+# language from this header then serve the French pages.
+ACCEPT_LANGUAGE = "fr-CA,fr;q=0.9,en;q=0.5"
+REQUEST_HEADERS = {"User-Agent": USER_AGENT, "Accept-Language": ACCEPT_LANGUAGE}
 DEFAULT_MAX_PAGES = 50
 
 SKIP_EXTENSIONS = {
@@ -72,7 +76,7 @@ class Page:
 class Pair:
     en: str
     fr: str | None
-    method: str  # "hreflang", "switcher" or "none"
+    method: str  # "hreflang", "switcher", "not_crawled" or "none"
 
     def to_dict(self) -> dict:
         return {"en": self.en, "fr": self.fr, "method": self.method}
@@ -85,12 +89,14 @@ class CrawlResult:
     pairs: list[Pair]
     skipped: list[dict]
     hit_page_cap: bool
+    start_redirect: str | None = None
 
     def to_dict(self) -> dict:
         return {
             "start_url": self.start_url,
             "page_count": len(self.pages),
             "hit_page_cap": self.hit_page_cap,
+            "start_redirect": self.start_redirect,
             "pages": [p.to_dict() for p in self.pages.values()],
             "pairs": [p.to_dict() for p in self.pairs],
             "skipped": self.skipped,
@@ -218,7 +224,7 @@ def load_robots(client: httpx.Client, start_url: str) -> robotparser.RobotFilePa
     robots_url = urlunsplit((parts.scheme, parts.netloc, "/robots.txt", "", ""))
     parser = robotparser.RobotFileParser()
     try:
-        response = client.get(robots_url)
+        response = client.get(robots_url, headers=REQUEST_HEADERS)
         lines = response.text.splitlines() if response.status_code == 200 else []
     except httpx.HTTPError:
         lines = []
@@ -238,26 +244,30 @@ def crawl(
     start_url = normalize_url(start_url)
     own_client = client is None
     client = client or httpx.Client(
-        headers={"User-Agent": USER_AGENT}, follow_redirects=True, timeout=20.0
+        headers=REQUEST_HEADERS, follow_redirects=True, timeout=20.0
     )
     pages: dict[str, Page] = {}
     skipped: list[dict] = []
+    # Two queues. French pages go first, so the page limit is spent on the
+    # pages we check, not on English pages that only point to them.
+    french_queue: deque[str] = deque()
     queue: deque[str] = deque([start_url])
     seen: set[str] = {start_url}
+    start_redirect = None
     hit_cap = False
 
     try:
         robots = load_robots(client, start_url) if respect_robots else None
-        while queue:
+        while french_queue or queue:
             if len(pages) >= max_pages:
                 hit_cap = True
                 break
-            url = queue.popleft()
+            url = french_queue.popleft() if french_queue else queue.popleft()
             if robots and not robots.can_fetch(USER_AGENT, url):
                 skipped.append({"url": url, "reason": "robots.txt"})
                 continue
             try:
-                response = client.get(url)
+                response = client.get(url, headers=REQUEST_HEADERS)
             except httpx.HTTPError as error:
                 skipped.append({"url": url, "reason": f"error: {error.__class__.__name__}"})
                 continue
@@ -277,11 +287,21 @@ def crawl(
             if progress:
                 progress(len(pages), max_pages, final_url)
 
-            for target in [*page.links, *page.alternates.values()]:
+            if url == start_url and final_url != start_url:
+                start_redirect = final_url
+            french_targets = {
+                href for code, href in page.alternates.items() if primary_language(code) == "fr"
+            }
+            if page.switcher.get("fr"):
+                french_targets.add(page.switcher["fr"])
+            for target in [*page.alternates.values(), *page.links]:
                 if target not in seen and same_site(target, start_url) and looks_like_html(target):
                     seen.add(target)
-                    queue.append(target)
-            if delay and queue:
+                    if target in french_targets or language_from_url(target) == "fr":
+                        french_queue.append(target)
+                    else:
+                        queue.append(target)
+            if delay and (queue or french_queue):
                 time.sleep(delay)
     finally:
         if own_client:
@@ -293,6 +313,7 @@ def crawl(
         pairs=pair_pages(pages),
         skipped=skipped,
         hit_page_cap=hit_cap,
+        start_redirect=start_redirect,
     )
 
 
@@ -327,5 +348,13 @@ def pair_pages(pages: dict[str, Page]) -> list[Pair]:
                 if fr.switcher.get("en") == en.url:
                     fr_url, method = fr.url, "switcher"
                     break
+        if not fr_url:
+            # A French page is linked but the crawl stopped before reaching it.
+            # We cannot say it is missing, so it is not reported.
+            linked = [h for c, h in en.alternates.items() if primary_language(c) == "fr"]
+            linked += [en.switcher["fr"]] if en.switcher.get("fr") else []
+            unvisited = [h for h in linked if h not in pages]
+            if unvisited:
+                fr_url, method = unvisited[0], "not_crawled"
         pairs.append(Pair(en=en.url, fr=fr_url, method=method))
     return pairs

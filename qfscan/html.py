@@ -213,6 +213,15 @@ def render_html(report: dict) -> str:
         '<div class="note">The scan stopped at the page limit. Pages beyond the limit were not checked.</div>'
         if s.get("hit_page_cap") else ""
     )
+    redirect = (
+        f'<div class="note">The start page redirected to {escape(s["start_redirect"])}. '
+        'The site may choose the language itself.</div>'
+        if s.get("start_redirect") else ""
+    )
+    unvisited = s.get("french_pages_linked_not_crawled") or 0
+    if unvisited:
+        redirect += (f'<div class="note">{unvisited} English pages link to a French page that the scan did not reach '
+                     'before the page limit. They are not counted as missing.</div>')
     french_only = (
         '<div class="note">No English pages were found. This looks like a French only site, '
         'so the missing French page check does not apply. The other checks still ran on every French page.</div>'
@@ -220,7 +229,7 @@ def render_html(report: dict) -> str:
     )
     pairs = "".join(
         f'<tr><td>{escape(short(p["en"]))}</td><td>{escape(short(p["fr"])) if p["fr"] else "<b>none</b>"}</td>'
-        f'<td>{escape(p["method"])}</td></tr>'
+        f'<td>{escape(p["method"].replace("_", " "))}</td></tr>'
         for p in crawl.get("pairs", [])
     )
     pair_table = (
@@ -243,6 +252,7 @@ def render_html(report: dict) -> str:
 <div class="note">{escape(report["disclaimer"])}</div>
 <div class="stats">{stat_html}</div>
 {cap}
+{redirect}
 {french_only}
 <h2 id="findings">Findings</h2>
 {render_tabs(report)}
