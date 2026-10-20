@@ -65,6 +65,17 @@ details ul { margin:6px 0 0; padding-left:20px; }
 table { border-collapse:collapse; width:100%; font-size:.88rem; }
 th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
 th { color:var(--muted); font-weight:600; }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 4px; }
+.tab { font:inherit; font-size:.88rem; border:1px solid var(--line); background:var(--card); color:var(--ink);
+  border-radius:999px; padding:5px 12px; cursor:pointer; }
+.tab .n { color:var(--muted); margin-left:4px; }
+.tab[aria-selected="true"] { background:var(--accent); border-color:var(--accent); color:#fff; }
+.tab[aria-selected="true"] .n { color:#fff; opacity:.85; }
+.tab.review-tab[aria-selected="true"] { background:var(--review); border-color:var(--review); }
+.js .panel[hidden] { display:none; }
+.panel h3 { font-size:1rem; margin:18px 0 8px; }
+.panel h3 .count { color:var(--muted); font-weight:normal; }
+.top { display:inline-block; margin:10px 0 0; font-size:.88rem; }
 """
 
 
@@ -123,6 +134,69 @@ def render_group(items: list[dict], review: bool) -> str:
     return "".join(out) or '<p class="muted">None.</p>'
 
 
+def slug(text: str) -> str:
+    return "".join(c if c.isalnum() else "-" for c in text.lower()).strip("-")
+
+
+def render_tabs(report: dict) -> str:
+    """One tab per finding type, plus one tab for all needs review items."""
+    groups: dict[str, list[dict]] = {}
+    for item in report["findings"]:
+        groups.setdefault(item["type"], []).append(item)
+    ordered = sorted(groups.items(), key=lambda kv: -len(kv[1]))
+    tabs, panels = [], []
+    back = '<a class="top" href="#findings">&uarr; Back to the top of findings</a>'
+    for kind, members in ordered:
+        tid = "t-" + slug(kind)
+        tabs.append((tid, label(kind), len(members), False))
+        body = "".join(render_item(m, review=False) for m in members)
+        panels.append(f'<section class="panel" id="{tid}-panel" role="tabpanel" aria-labelledby="{tid}">'
+                      f'<h3>{escape(label(kind))} <span class="count">({len(members)})</span></h3>{body}{back}</section>')
+    review = report["needs_review"]
+    if review:
+        tabs.append(("t-review", "Needs review", len(review), True))
+        body = render_group(review, review=True)
+        panels.append('<section class="panel" id="t-review-panel" role="tabpanel" aria-labelledby="t-review">'
+                      '<p class="muted">Judgment calls. A person should decide.</p>'
+                      f'{body}{back}</section>')
+    if not tabs:
+        return '<p class="muted">No findings.</p>'
+    buttons = "".join(
+        f'<button class="tab{" review-tab" if is_review else ""}" id="{tid}" role="tab" '
+        f'aria-controls="{tid}-panel" aria-selected="{"true" if i == 0 else "false"}">'
+        f'{escape(name)}<span class="n">{n}</span></button>'
+        for i, (tid, name, n, is_review) in enumerate(tabs)
+    )
+    return f'<div class="tabs" role="tablist" aria-label="Finding types">{buttons}</div>{"".join(panels)}'
+
+
+TAB_SCRIPT = """
+<script>
+document.documentElement.classList.add('js');
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  function show(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { show(t); });
+    t.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') show(tabs[(i + 1) % tabs.length], true);
+      if (e.key === 'ArrowLeft') show(tabs[(i - 1 + tabs.length) % tabs.length], true);
+    });
+  });
+  if (tabs.length) show(tabs[0]);
+})();
+</script>
+"""
+
+
 def render_html(report: dict) -> str:
     s = report["summary"]
     crawl = report.get("crawl", {})
@@ -139,10 +213,20 @@ def render_html(report: dict) -> str:
         '<div class="note">The scan stopped at the page limit. Pages beyond the limit were not checked.</div>'
         if s.get("hit_page_cap") else ""
     )
+    french_only = (
+        '<div class="note">No English pages were found. This looks like a French only site, '
+        'so the missing French page check does not apply. The other checks still ran on every French page.</div>'
+        if s["english_pages"] == 0 else ""
+    )
     pairs = "".join(
         f'<tr><td>{escape(short(p["en"]))}</td><td>{escape(short(p["fr"])) if p["fr"] else "<b>none</b>"}</td>'
         f'<td>{escape(p["method"])}</td></tr>'
         for p in crawl.get("pairs", [])
+    )
+    pair_table = (
+        '<table><thead><tr><th>English page</th><th>French page</th><th>Matched by</th></tr></thead>'
+        f'<tbody>{pairs}</tbody></table>'
+        if pairs else '<p class="muted">No English and French page pairs.</p>'
     )
     return f"""<!doctype html>
 <html lang="en">
@@ -159,14 +243,13 @@ def render_html(report: dict) -> str:
 <div class="note">{escape(report["disclaimer"])}</div>
 <div class="stats">{stat_html}</div>
 {cap}
-<h2>Findings</h2>
-{render_group(report["findings"], review=False)}
-<h2>Needs review</h2>
-<p class="muted">Judgment calls. A person should decide.</p>
-{render_group(report["needs_review"], review=True)}
+{french_only}
+<h2 id="findings">Findings</h2>
+{render_tabs(report)}
 <h2>Page pairs</h2>
-<table><thead><tr><th>English page</th><th>French page</th><th>Matched by</th></tr></thead><tbody>{pairs}</tbody></table>
+{pair_table}
 </div>
+{TAB_SCRIPT}
 </body>
 </html>
 """
