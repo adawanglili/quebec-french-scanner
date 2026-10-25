@@ -25,7 +25,7 @@ The full list with the reason for each label is in `cases.py`. Everything else o
 | NLP + LLM second pass | The rules match first. The LLM gets each match with its sentence and answers flag, ok or unsure. | Only the matched sentences |
 | LLM only | The LLM reads the full text of each page and lists the terms to replace. | Every page |
 
-Each LLM arm runs 3 times by default to show how stable the answers are. Temperature is 0.
+Each LLM arm runs 3 times by default. Temperature is 0, so Ollama runs repeat exactly and do not show stability. Cohere runs can still differ a little at temperature 0.
 
 ## Run it
 
@@ -55,6 +55,7 @@ To check the setup without a model, use `--provider stub`.
 
 - **Errors** are false flags plus missed anglicisms plus extra findings on clean text.
 - **Left for review** is what the LLM marked unsure. It is not an error, but a person still has to check it.
+- A skipped item is also counted as unsure. Check `raw/` for items the model did not answer, because a model that skips items can look better than it is.
 - **Tokens** are the counts the provider reports, not estimates.
 
 The summary also gives the cost per flagged item and the cost per 1,000 characters of page text. Use them to estimate a real site. The second pass grows with the number of flagged items. The full page scan grows with the amount of text.

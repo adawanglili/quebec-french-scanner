@@ -16,7 +16,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 TYPE_LABELS = {
-    "missing_french_page": "Missing French page",
+    "missing_french_page": "French coverage gap",
     "leftover_english": "English text on a French page",
     "leftover_english_title": "English page title",
     "leftover_english_metadata": "English meta description",
@@ -26,7 +26,8 @@ TYPE_LABELS = {
     "tolerated_anglicism": "Tolerated borrowing",
     "terminology_review": "Term to check in context",
     "possible_quoted_title": "Possible title of a work",
-    "france_french_term": "France French term",
+    "short_word_with_number": "Short word next to a number",
+    "france_french_term": "Usual Quebec term differs",
 }
 
 CSS = """
@@ -227,11 +228,20 @@ def render_html(report: dict) -> str:
     if report.get("source") == "saved_pages":
         redirect += ('<div class="note">This report comes from pages saved from a browser, not from a live crawl. '
                      'Only the saved pages were checked.</div>')
-    french_only = (
-        '<div class="note">No English pages were found. This looks like a French only site, '
-        'so the missing French page check does not apply. The other checks still ran on every French page.</div>'
-        if s["english_pages"] == 0 else ""
-    )
+    linked = s.get("english_versions_linked_not_crawled") or 0
+    if s["english_pages"] == 0 and linked:
+        french_only = (
+            f'<div class="note">The French pages link to {linked} English versions, but the crawl '
+            'did not reach them before the page limit. The French coverage check did not run. '
+            'The other checks ran on every French page.</div>'
+        )
+    elif s["english_pages"] == 0:
+        french_only = (
+            '<div class="note">No English pages were found. This looks like a French only site, '
+            'so the French coverage check does not apply. The other checks still ran on every French page.</div>'
+        )
+    else:
+        french_only = ""
     pairs = "".join(
         f'<tr><td>{escape(short(p["en"]))}</td><td>{escape(short(p["fr"])) if p["fr"] else "<b>none</b>"}</td>'
         f'<td>{escape(p["method"].replace("_", " "))}</td></tr>'

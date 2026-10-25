@@ -1,10 +1,12 @@
 # Quebec French Website Scanner
 
-A language gap scanner for websites that serve Quebec. It finds pages and strings that may not meet French language expectations, explains each one and points to the rule or term record behind it.
+A low-cost check that finds where a website's French could serve Quebec readers better. Each finding is grounded in OQLF and Quebec government language sources.
 
-The scanner supports human review. It does not give legal advice and it never says a site is "compliant." Results are risk findings or items that need review.
+Rules and word lists do most of the work, so a scan is cheap. Each finding explains what was found and cites the OQLF record behind it where one exists. Results are French gaps and opportunities, or items that need review.
 
-This is an experimental project by Ada Lili Wang. It is a working prototype, not a product.
+Bill 96 has raised the profile of French on Quebec websites. This tool does not assess legal compliance.
+
+**Disclaimer.** This is an experimental personal project by Ada Lili Wang. It is a working prototype, not a product. It is not legal advice and does not assess compliance with any law. Findings are language suggestions based on public OQLF and Quebec government resources.
 
 ## Status
 
@@ -22,7 +24,7 @@ The fixture was built alongside the scanner, so these numbers show the checks wo
 
 | Check | What it does |
 | --- | --- |
-| Missing French page | An English page has no French equivalent |
+| French coverage gap | An English page has no French equivalent |
 | Leftover English | English strings on French pages: buttons, menus, errors, alt text |
 | Metadata | English page title or meta description, missing or wrong `lang` |
 | OQLF terminology | Common web anglicisms, with a Quebec French suggestion and the GDT record cited |
@@ -49,7 +51,7 @@ qfscan/
   lexicon/web_terms.csv   curated list of common web anglicisms
   files.py           scans pages saved from a browser
   checks.py          runs the checks and merges repeated findings
-  rules.py           why each finding matters, its reference and the fix
+  rules.py           why each finding matters, its source and the fix
   report.py          builds the JSON report
   html.py            builds the HTML report and the CSV review sheet
   server.py          local web page for running scans

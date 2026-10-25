@@ -36,6 +36,14 @@ WORD_MARGIN = 1.0  # zipf difference needed for a word to lean one way
 EMAIL = re.compile(r"\S+@\S+")
 URL = re.compile(r"https?://\S+|www\.\S+")
 HAS_DIGIT = re.compile(r"\d")
+
+# Short French units and abbreviations that often follow a number ("1 an",
+# "2 h", "5 km"). One of these next to a number is skipped as French.
+FRENCH_SHORT_UNITS = frozenset({
+    "an", "ans", "h", "min", "s", "j", "sem", "km", "m", "cm", "mm", "kg", "g", "mg",
+    "l", "ml", "lb", "oz", "po", "pi", "mo", "go", "ko", "to", "p", "pp", "x",
+    "er", "re", "e", "es", "de", "à", "et", "ou", "au", "le", "la", "les",
+})
 FILE_NAME = re.compile(r"\.(png|jpe?g|gif|webp|svg|avif|bmp|tiff?)$", re.IGNORECASE)
 
 
@@ -56,6 +64,7 @@ class LanguageVerdict:
     english_words: int
     french_words: int
     words: int
+    uncertain: bool = False  # too little text to judge alone; send to review
 
 
 @lru_cache(maxsize=1)
@@ -186,6 +195,16 @@ def judge_language(text: str, brand_words: set[str] | None = None) -> LanguageVe
     words = words_for_detection(text, brand_words or set())
     if not words:
         return None
+    if len(words) == 1 and len(words[0]) <= 3 and HAS_DIGIT.search(text):
+        # One short word next to a number is too little evidence to judge.
+        # Known French units ("1 an", "2 h") and French leaning words are
+        # skipped. Anything else ("1 day", "5 pm") goes to review, so the
+        # LLM second pass can judge it with its sentence.
+        word = words[0]
+        lean = word_lean(word)
+        if word in FRENCH_SHORT_UNITS or lean < 0:
+            return None
+        return LanguageVerdict(True, 0.0, int(lean > 0), 0, 1, uncertain=True)
     sample = " ".join(words)
     confidence = detector().compute_language_confidence(sample, Language.ENGLISH)
     leans = [word_lean(w) for w in words]

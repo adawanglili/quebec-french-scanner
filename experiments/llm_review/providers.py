@@ -38,7 +38,15 @@ class Reply:
 def post(url: str, headers: dict, body: dict, timeout: float = 120.0) -> dict:
     """POST with a few retries when the provider says to slow down."""
     for attempt in range(5):
-        response = httpx.post(url, headers=headers, json=body, timeout=timeout)
+        try:
+            response = httpx.post(url, headers=headers, json=body, timeout=timeout)
+        except httpx.TimeoutException:
+            if attempt == 4:
+                raise
+            wait = 10 * (attempt + 1)
+            print(f"  request timed out, retrying in {wait} s")
+            time.sleep(wait)
+            continue
         if response.status_code == 429 or response.status_code >= 500:
             wait = float(response.headers.get("retry-after") or 10 * (attempt + 1))
             print(f"  provider busy ({response.status_code}), waiting {wait:.0f} s")

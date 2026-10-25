@@ -159,7 +159,7 @@ def render_home(reports_dir: Path) -> str:
 <body>
 <div class="wrap">
 <h1>Quebec French Scanner</h1>
-<p class="meta">Finds potential French language gaps on one website. It is not legal advice.</p>
+<p class="meta">Finds French market fit opportunities on one website, grounded in OQLF sources. It is not legal advice.</p>
 <h2>New scan</h2>
 <form id="scan">
   <label>Website address <small>Start page, for example https://www.example.ca/fr/</small>

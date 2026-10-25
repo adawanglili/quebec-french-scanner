@@ -132,7 +132,10 @@ def check_leftover_english(page: Page, brand: set[str]) -> list[Finding]:
             evidence["context"] = unit.context
         if unit.visibility:
             evidence["visibility"] = unit.visibility
-        if unit.tag in {"em", "i", "cite", "q"} and unit.kind == "text":
+        if verdict.uncertain:
+            evidence["note"] = "One short word next to a number. Too little text to judge alone."
+            findings.append(Finding("short_word_with_number", NEEDS_REVIEW, unit.text, unit.element, [page.url], evidence))
+        elif unit.tag in {"em", "i", "cite", "q"} and unit.kind == "text":
             findings.append(Finding("possible_quoted_title", NEEDS_REVIEW, unit.text, unit.element, [page.url], evidence))
         else:
             findings.append(Finding("leftover_english", FINDING, unit.text, unit.element, [page.url], evidence))
@@ -152,13 +155,13 @@ def check_metadata(page: Page, brand: set[str]) -> list[Finding]:
     # language gap, so it is not reported (decision of 2026-10-19).
     if page.title:
         verdict = judge_language(page.title, brand)
-        if verdict and verdict.is_english:
+        if verdict and verdict.is_english and not verdict.uncertain:
             findings.append(Finding("leftover_english_title", FINDING, page.title, "title", [page.url],
                                     {"english_confidence": verdict.english_confidence}))
 
     if page.description:
         verdict = judge_language(page.description, brand)
-        if verdict and verdict.is_english:
+        if verdict and verdict.is_english and not verdict.uncertain:
             findings.append(Finding("leftover_english_metadata", FINDING, page.description,
                                     "meta[name=description]", [page.url],
                                     {"english_confidence": verdict.english_confidence}))

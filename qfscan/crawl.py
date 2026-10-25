@@ -57,6 +57,7 @@ class Page:
     links: list[str] = field(default_factory=list)
     language: str | None = None
     language_source: str | None = None
+    canonical: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -111,7 +112,34 @@ def normalize_url(url: str) -> str:
     """Lowercase scheme and host, drop the fragment, default the path to /."""
     parts = urlsplit(url)
     path = parts.path or "/"
-    return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), path, parts.query, ""))
+    query = "&".join(
+        pair for pair in parts.query.split("&")
+        if pair and not TRACKING_PARAMS.match(pair.split("=", 1)[0])
+    )
+    return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), path, query, ""))
+
+
+TRACKING_PARAMS = re.compile(r"^(utm_\w+|gclid|fbclid|mc_cid|mc_eid)$", re.I)
+
+
+def duplicate_of(page: Page, pages: dict) -> str | None:
+    """Return the crawled URL this page duplicates, or None.
+
+    A page is a duplicate when its canonical link, or the hreflang link for its
+    own language, points to another page we already crawled. This catches the
+    same page reached with a tracking parameter, like ?navigMW=pp.
+    """
+    candidates = []
+    if page.canonical:
+        candidates.append(page.canonical)
+    lang = page.language
+    for code, href in page.alternates.items():
+        if lang and primary_language(code) == lang:
+            candidates.append(href)
+    for target in candidates:
+        if target != page.url and target in pages:
+            return target
+    return None
 
 
 def same_site(url: str, start: str) -> bool:
@@ -169,6 +197,9 @@ def parse_page(url: str, status: int, html: str) -> Page:
 
     for link in soup.find_all("link", rel="alternate", hreflang=True, href=True):
         page.alternates[link["hreflang"].strip()] = normalize_url(urljoin(url, link["href"]))
+    canonical = soup.find("link", rel="canonical", href=True)
+    if canonical is not None:
+        page.canonical = normalize_url(urljoin(url, canonical["href"]))
 
     for a in soup.find_all("a", href=True):
         href = a["href"].strip()
@@ -283,6 +314,10 @@ def crawl(
                 continue
             html = response.text if response.status_code == 200 else ""
             page = parse_page(final_url, response.status_code, html)
+            original = duplicate_of(page, pages)
+            if original:
+                skipped.append({"url": final_url, "reason": f"same page as {original}"})
+                continue
             pages[final_url] = page
             if progress:
                 progress(len(pages), max_pages, final_url)

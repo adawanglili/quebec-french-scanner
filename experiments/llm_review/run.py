@@ -44,6 +44,7 @@ For each item, decide from its sentence whether this occurrence is:
   "flag"   an anglicism that a Quebec French editor would replace, following OQLF recommendations
   "ok"     correct as written, for example another meaning of the word, a proper name or a brand
   "unsure" the sentence truly does not decide it
+Common usage is not enough. If the OQLF recommends another term for this meaning, decide "flag".
 Reply with JSON only, in this form:
 {"results": [{"id": "M01", "decision": "flag", "reason": "at most 15 words"}]}"""
 
@@ -55,7 +56,31 @@ Reply with JSON only, in this form:
 {"findings": [{"term": "the word as written", "quote": "the full sentence that contains it", "suggestion": "Quebec French term"}]}
 If there is nothing to report, reply {"findings": []}."""
 
-PROMPT_VERSION = hashlib.sha256((HYBRID_SYSTEM + LLM_ONLY_SYSTEM).encode()).hexdigest()[:10]
+from review_report import TERM_SYSTEM as HYBRID_SYSTEM_V3  # noqa: E402  (prompt v3)
+
+# OQLF records for each meaning of the four terms, from the GDT (fiches signees,
+# 2026-01-19). Prompt v3 sends them with each item, so the model judges against
+# the record and not against what it believes the OQLF says. "mail" has two
+# meanings and two records: the email one and the shopping mall one.
+RECORDS = {
+    "mail": "email: courriel (n. m.);courrier électronique (n. m.);message électronique (n. m.) | "
+            "shopping mall: galerie marchande (n. f.);galerie commerciale (n. f.);galerie de boutiques (n. f.);"
+            "mail commercial (n. m.);mail (n. m.)",
+    "chat": "online chat: clavardage (n. m.) [Québec/Canada];cyberbavardage (n. m.) [Québec/Canada];"
+            "bavardage-clavier (n. m.) [Québec/Canada];dialogue en ligne (n. m.)",
+    "booking": "booking, reservation: réservation (n. f.)",
+    "spam": "junk email: pourriel (n. m.)",
+}
+
+PROMPTS = {"v2": HYBRID_SYSTEM, "v3": HYBRID_SYSTEM_V3}
+
+
+def prompt_version(name: str) -> str:
+    digest = hashlib.sha256((PROMPTS[name] + LLM_ONLY_SYSTEM).encode()).hexdigest()[:10]
+    return digest if name == "v2" else f"{name}-{digest}"
+
+
+PROMPT_VERSION = prompt_version("v2")
 
 
 def norm(text: str) -> str:
@@ -74,6 +99,11 @@ def find_case(slug: str, text: str, term: str, all_cases: list[dict]) -> dict | 
     return None
 
 
+def base_term(form: str) -> str:
+    form = form.lower()
+    return next((t for t in RECORDS if form.startswith(t)), form)
+
+
 def nlp_matches(all_cases: list[dict]) -> list[dict]:
     """Every match of a middle ground term, in page order."""
     lexicon = load_lexicon(LEXICON, NO_DATA)
@@ -89,6 +119,8 @@ def nlp_matches(all_cases: list[dict]) -> list[dict]:
                     "element": unit.element,
                     "term": match.form,
                     "suggestion": match.entry.suggestion,
+                    "oqlf_terms": RECORDS.get(base_term(match.form), ""),
+                    "note": match.entry.note or "",
                     "sentence": unit.text,
                     "case": case["id"] if case else None,
                 })
@@ -114,15 +146,15 @@ def cached_ask(provider, model, system, user, cache: Path, fresh: bool):
     return record
 
 
-def arm_hybrid(all_cases, items, provider, model, run, raw_dir, fresh, batch_size):
+def arm_hybrid(all_cases, items, provider, model, run, raw_dir, fresh, batch_size, prompt="v2"):
     usage = {"input_tokens": 0, "output_tokens": 0, "calls": 0, "seconds": 0.0}
     answers = {}
     for start in range(0, len(items), batch_size):
         batch = items[start:start + batch_size]
-        payload = {"items": [{k: i[k] for k in ("id", "term", "suggestion", "sentence")}
-                             for i in batch]}
+        keys = ("id", "term", "suggestion", "sentence") + (("oqlf_terms", "note") if prompt == "v3" else ())
+        payload = {"items": [{k: i[k] for k in keys} for i in batch]}
         user = json.dumps(payload, ensure_ascii=False)
-        record = cached_ask(provider, model, HYBRID_SYSTEM, user,
+        record = cached_ask(provider, model, PROMPTS[prompt], user,
                             raw_dir / f"hybrid-run{run}-batch{start // batch_size + 1}.json", fresh)
         for key in ("input_tokens", "output_tokens", "seconds"):
             usage[key] += record[key]
@@ -292,14 +324,19 @@ def main(argv=None) -> int:
     parser.add_argument("--arms", default="nlp,hybrid,llm")
     parser.add_argument("--batch-size", type=int, default=30, help="Items per second pass call")
     parser.add_argument("--fresh", action="store_true", help="Call the model again instead of reusing saved replies")
-    parser.add_argument("--out", help="Results folder. Default: results/<provider>-<model>")
+    parser.add_argument("--out", help="Results folder. Default: results/<provider>-<model>[-v3]")
+    parser.add_argument("--prompt", default="v2", choices=sorted(PROMPTS),
+                        help="Second pass prompt. v3 sends the OQLF records with each item.")
     args = parser.parse_args(argv)
 
     if not (SITE / "fr").exists():
         raise SystemExit("Build the site first: python experiments/llm_review/build_site.py")
     model = args.model or DEFAULT_MODELS[args.provider]
     safe_model = re.sub(r"[^\w.-]+", "_", model)
-    out_dir = Path(args.out) if args.out else RESULTS / f"{args.provider}-{safe_model}"
+    suffix = "" if args.prompt == "v2" else f"-{args.prompt}"
+    out_dir = Path(args.out) if args.out else RESULTS / f"{args.provider}-{safe_model}{suffix}"
+    global PROMPT_VERSION
+    PROMPT_VERSION = prompt_version(args.prompt)
     raw_dir = out_dir / "raw"
     arms = [a.strip() for a in args.arms.split(",")]
 
@@ -317,7 +354,7 @@ def main(argv=None) -> int:
         if "hybrid" in arms:
             print(f"Second pass, run {run}")
             decisions, extras, usage, reasons = arm_hybrid(all_cases, items, args.provider, model, run, raw_dir,
-                                                           args.fresh, args.batch_size)
+                                                           args.fresh, args.batch_size, args.prompt)
             results.setdefault("hybrid", []).append({**score(all_cases, decisions, extras), **usage,
                                                      "decisions": decisions, "reasons": reasons})
         if "llm" in arms:
