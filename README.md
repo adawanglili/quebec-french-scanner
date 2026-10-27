@@ -131,8 +131,6 @@ Download one dataset only with `--only`, for example `--only terms`. Download ag
 
 **Noncommercial use.** This project is a noncommercial portfolio prototype, which the license allows. Any commercial use of the OQLF data would need permission from the OQLF.
 
-**Planned sources.** TERMIUM Plus (Government of Canada) and the Dictionnaire des francophones may be added later. Their licenses still need to be checked.
-
 ## License
 
 The code in this repo is under the [MIT License](LICENSE). The OQLF data keeps its own license, described above.
