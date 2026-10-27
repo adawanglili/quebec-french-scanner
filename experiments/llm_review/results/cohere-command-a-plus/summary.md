@@ -5,8 +5,8 @@ Run on 2026-10-22 12:04. Provider `cohere`, model `command-a-plus-05-2026`, prom
 
 | Arm | Runs | Errors | Error rate | False flags | Missed | Extra findings | Left for review | Calls | Input tokens | Output tokens | Total tokens |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NLP only | 1 | 13.0 | 50% | 13.0 | 0.0 | 0.0 | 0.0 | 0 | 0 | 0 | 0 |
-| NLP + LLM second pass | 3 | 3.3 (2 to 5) | 13% | 3.3 | 0.0 | 0.0 | 0.0 | 1 | 1312 | 3541 | 4853 |
+| Rules alone | 1 | 13.0 | 50% | 13.0 | 0.0 | 0.0 | 0.0 | 0 | 0 | 0 | 0 |
+| Rules + LLM second pass | 3 | 3.3 (2 to 5) | 13% | 3.3 | 0.0 | 0.0 | 0.0 | 1 | 1312 | 3541 | 4853 |
 | LLM only (full pages) | 3 | 3.3 (2 to 5) | 12% | 1.0 | 1.0 | 1.3 | 0.0 | 5 | 1909 | 18428 | 20337 |
 
 The second pass cut errors by 74% compared with rules alone.
@@ -23,6 +23,6 @@ How to read this:
 - Half the cases are deliberately ambiguous. Real sites have far fewer, so the error rates here are not real world rates.
 - The cases were written by the same person who wrote the prompts. Treat this as a pilot, not a benchmark.
 
-Cases wrong at least once with NLP only: C01, C02, C03, C04, C11, C12, C13, C14, C15, C16, C20, C21, C25
-Cases wrong at least once with NLP + LLM second pass: C01, C02, C11, C12, C20
+Cases wrong at least once with Rules alone: C01, C02, C03, C04, C11, C12, C13, C14, C15, C16, C20, C21, C25
+Cases wrong at least once with Rules + LLM second pass: C01, C02, C11, C12, C20
 Cases wrong at least once with LLM only (full pages): C02, C11, C12, C23

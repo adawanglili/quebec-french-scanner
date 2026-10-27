@@ -8,6 +8,12 @@ Bill 96 has raised the profile of French on Quebec websites. This tool does not 
 
 **Disclaimer.** This is an experimental personal project by Ada Lili Wang. It is a working prototype, not a product. It is not legal advice and does not assess compliance with any law. Findings are language suggestions based on public OQLF and Quebec government resources.
 
+## How it works
+
+![How the scanner works: rules find candidates, ambiguous ones get their OQLF record and an LLM second pass, and a person makes the final call](docs/how-it-works.svg)
+
+Write-up: [Stationnement, Not Parking: Building a Small Quebec French Scanner](https://adawanglili.com/blog/stationnement-not-parking-quebec-french-scanner/). It explains why the scanner exists, how the layers fit together, the LLM experiment and what broke along the way.
+
 ## Status
 
 The crawler, all four checks, the reports (JSON, HTML and a CSV review sheet), the local scan page, saved page scanning and the scorer work end to end. On the fixture site the scanner finds every planted gap with no false positives:

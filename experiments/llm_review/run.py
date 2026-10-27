@@ -256,7 +256,7 @@ def write_summary(all_cases, items, results, provider, model, out_dir: Path):
             "error_range": (min(r["errors"] for r in runs), max(r["errors"] for r in runs)),
         })
     by_arm = {r["arm"]: r for r in rows}
-    labels = {"nlp": "NLP only", "hybrid": "NLP + LLM second pass", "llm": "LLM only (full pages)"}
+    labels = {"nlp": "Rules alone", "hybrid": "Rules + LLM second pass", "llm": "LLM only (full pages)"}
 
     lines = [
         "# LLM second pass experiment",

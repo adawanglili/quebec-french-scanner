@@ -5,8 +5,8 @@ Run on 2026-10-20 15:14. Provider `cohere`, model `command-a-03-2025`, prompt ve
 
 | Arm | Runs | Errors | Error rate | False flags | Missed | Extra findings | Left for review | Calls | Input tokens | Output tokens | Total tokens |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NLP only | 1 | 13.0 | 50% | 13.0 | 0.0 | 0.0 | 0.0 | 0 | 0 | 0 | 0 |
-| NLP + LLM second pass | 3 | 0.0 | 0% | 0.0 | 0.0 | 0.0 | 0.0 | 1 | 1817 | 573 | 2390 |
+| Rules alone | 1 | 13.0 | 50% | 13.0 | 0.0 | 0.0 | 0.0 | 0 | 0 | 0 | 0 |
+| Rules + LLM second pass | 3 | 0.0 | 0% | 0.0 | 0.0 | 0.0 | 0.0 | 1 | 1817 | 573 | 2390 |
 
 The second pass cut errors by 100% compared with rules alone.
 Second pass cost: about 92 tokens per flagged item (the instructions are shared across a batch, so larger batches cost less per item).
@@ -19,4 +19,4 @@ How to read this:
 - Half the cases are deliberately ambiguous. Real sites have far fewer, so the error rates here are not real world rates.
 - The cases were written by the same person who wrote the prompts. Treat this as a pilot, not a benchmark.
 
-Cases wrong at least once with NLP only: C01, C02, C03, C04, C11, C12, C13, C14, C15, C16, C20, C21, C25
+Cases wrong at least once with Rules alone: C01, C02, C03, C04, C11, C12, C13, C14, C15, C16, C20, C21, C25

@@ -28,8 +28,8 @@ def test_stub_run_writes_summary(tmp_path):
     build_site.main()
     assert run.main(["--provider", "stub", "--runs", "1", "--out", str(tmp_path)]) == 0
     summary = (tmp_path / "summary.md").read_text(encoding="utf-8")
-    assert "NLP + LLM second pass" in summary
-    assert "| NLP only | 1 | 13.0 | 50% |" in summary
+    assert "Rules + LLM second pass" in summary
+    assert "| Rules alone | 1 | 13.0 | 50% |" in summary
 
 
 def test_prompt_v3_sends_oqlf_records(tmp_path):

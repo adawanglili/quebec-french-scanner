@@ -2,6 +2,8 @@
 
 Some words are an anglicism in one sentence and correct in the next. *Mail* can mean email or a shopping centre. The rules cannot tell them apart, so they send every match to human review.
 
+The results are discussed in the blog post [Stationnement, Not Parking](https://adawanglili.com/blog/stationnement-not-parking-quebec-french-scanner/).
+
 This experiment asks one question. If an LLM judges only what the rules matched, does it remove the noise, and how many tokens does that cost compared with an LLM reading every page?
 
 ## The test site
@@ -21,8 +23,8 @@ The full list with the reason for each label is in `cases.py`. Everything else o
 
 | Arm | What it does | Tokens |
 | --- | --- | --- |
-| NLP only | The rules match the four terms. Every match is treated as a flag. | 0 |
-| NLP + LLM second pass | The rules match first. The LLM gets each match with its sentence and answers flag, ok or unsure. | Only the matched sentences |
+| Rules alone | The rules match the four terms. Every match is treated as a flag. | 0 |
+| Rules + LLM second pass | The rules match first. The LLM gets each match with its sentence and answers flag, ok or unsure. | Only the matched sentences |
 | LLM only | The LLM reads the full text of each page and lists the terms to replace. | Every page |
 
 Each LLM arm runs 3 times by default. Temperature is 0, so Ollama runs repeat exactly and do not show stability. Cohere runs can still differ a little at temperature 0.
